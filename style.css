@@ -3,12 +3,12 @@
 }
 
 body {
-	background: url('images/bg.gif') no-repeat top center;
+	background-image: url('images/darknoise.png');
+	background-color: rgb(34, 34, 34);
 	color: #FFFFFF;
 	font-size: 12px;
 	font-family: "Century Gothic", "Avant Garde", sans-serif;
 	text-align:center;
-	background-color: #000000;
 }
 
 #header {
