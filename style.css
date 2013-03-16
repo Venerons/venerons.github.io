@@ -81,6 +81,10 @@ body {
 	padding-right: 0px;
 }
 
+#news strong {
+	color: rgb(63, 136, 219);
+}
+
 #news h3.title {
 	font-size: 18px;
 	font-weight: bold;
@@ -126,7 +130,6 @@ body {
 	font-weight: normal;
 	width: 200px;
 	float: left;
-	text-transform: uppercase;
 }
 
 #footer{
