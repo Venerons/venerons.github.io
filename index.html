@@ -1,116 +1,274 @@
+<!-- Copyright (c) 2013 Daniele Veneroni -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <title>Venerons Lab*s</title>
 
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <meta name="Keywords" content="venerons,laboratories,labs,daniele,veneroni,software" />
-    <meta name="Description" content="Official website of the Venerons Laboratories" />
-    <meta name="application-name" content="Venerons Laboratories" />
+    <meta name="application-name" content="Daniele Veneroni - Venerons Laboratories" />
     <meta name="author" content="Daniele Veneroni" />
-    <meta name="copyright" content="Daniele Veneroni" />
+    <meta name="description" content="Official website of the Daniele Veneroni and Venerons Laboratories" />
+    <meta name="keywords" content="venerons,laboratories,labs,daniele,veneroni,services,software" />
+    <meta name="copyright" content="© 2013 Daniele Veneroni" />
     <meta name="generator" content="Daniele Veneroni" />
     <meta name="robots" content="index,follow,snippet,archive" />
+    <meta name="revisit-after" content="7 days">
 
-    <!-- Le styles -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="apple-touch-icon-precomposed" href="img/icons/icon57.png">
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="img/icons/icon57.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="img/icons/icon72.png">
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="img/icons/icon76.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="img/icons/icon114.png">
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="img/icons/icon120.png">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="img/icons/icon144.png">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="img/icons/icon152.png">
+
+    <link rel="icon" sizes="16x16" type="image/vnd.microsoft.icon" href="img/icons/icon16.ico">
+    <link rel="icon" sizes="16x16" type="image/png" href="img/icons/icon16.png">
+    <link rel="icon" sizes="32x32" type="image/png" href="img/icons/icon32.png">
+    <link rel="icon" sizes="64x64" type="image/png" href="img/icons/icon64.png">
+    <link rel="icon" sizes="any" type="image/svg+xml" href="img/icons/icon.svg">
+
     <style type="text/css">
+      html, body {
+          height:100%;
+          margin: 0;
+          padding: 0;
+          border: none;
+          text-align: center;
+      }
       body {
-        padding-top: 20px;
-        padding-bottom: 40px;
-        /* Background image */
+        color: #FFFFFF;
+        font-family: "Helvetica Neue", "Helvetica", sans-serif;
+        font-weight: 100;
+        font-size: 16px;
+        font-size: 1rem;
+        
+        background: rgb(135,224,253); /* Old browsers */
+        background-image: url("img/darknoise.png"), -moz-radial-gradient(center, ellipse cover,  rgba(135,224,253,1) 0%, rgba(83,203,241,1) 40%, rgba(5,171,224,1) 100%); /* FF3.6+ */
+        background-image: url("img/darknoise.png"), -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgba(135,224,253,1)), color-stop(40%,rgba(83,203,241,1)), color-stop(100%,rgba(5,171,224,1))); /* Chrome,Safari4+ */
+        background-image: url("img/darknoise.png"), -webkit-radial-gradient(center, ellipse cover,  rgba(135,224,253,1) 0%,rgba(83,203,241,1) 40%,rgba(5,171,224,1) 100%); /* Chrome10+,Safari5.1+ */
+        background-image: url("img/darknoise.png"), -o-radial-gradient(center, ellipse cover,  rgba(135,224,253,1) 0%,rgba(83,203,241,1) 40%,rgba(5,171,224,1) 100%); /* Opera 12+ */
+        background-image: url("img/darknoise.png"), -ms-radial-gradient(center, ellipse cover,  rgba(135,224,253,1) 0%,rgba(83,203,241,1) 40%,rgba(5,171,224,1) 100%); /* IE10+ */
+        background-image: url("img/darknoise.png"), radial-gradient(ellipse at center,  rgba(135,224,253,1) 0%,rgba(83,203,241,1) 40%,rgba(5,171,224,1) 100%); /* W3C */
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#87e0fd', endColorstr='#05abe0',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+      }
+
+      a { text-decoration: none; color: #FFFFFF; }
+      a:hover { color: #FBB829; }
+      p.gold { color: #FBB829; }
+      p.justify { text-align: justify; }
+
+      h1, h2, h3, h4, h5, h6 { font-weight: 100; text-shadow: 0px 1px 1px rgba(0,0,0,.3); margin: 0rem; }
+      h1 { font-size: 3rem; color: #FBB829; }
+      h3 { margin-bottom: 1rem; color: #F0F0D8; }
+      h4 { color: #FBB829; }
+
+      div#card {
+        position: absolute;
+        top: 20%;
+        left: 25%;
+        width: 50%;
+        min-width: 280px;
+        height: auto;
+        max-height: 50%;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 20px #000000;
+        background-color: rgba(0, 0, 0, .5);
         background-image: url("img/darknoise.png");
+        overflow: auto;
       }
 
-      /* Custom container */
-      .container-narrow {
-        margin: 0 auto;
-        max-width: 700px;
-      }
-      .container-narrow > hr {
-        margin: 30px 0;
-      }
+      table { width: 100%; text-align: left; }
+      table td { width: 50%; }
+      table td.center { text-align: center; }
 
-      /* Main marketing message and sign up button */
-      .jumbotron {
-        margin: 60px 0;
-        text-align: center;
-      }
-      .jumbotron h1 {
-        font-size: 72px;
-        line-height: 1;
-      }
-      .jumbotron .btn {
-        font-size: 21px;
-        padding: 14px 24px;
-      }
-
-      /* Supporting marketing content */
-      .marketing {
-        margin: 60px 0;
-      }
-      .marketing p + h4 {
-        margin-top: 28px;
+      footer {
+        color: #000000 !important;
+        width: 100%;
+        position: fixed;
+        bottom: 0px;
+        z-index: -1;
       }
     </style>
-    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
 
-    <!-- Fav and touch icons -->
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="img/apple-touch-icon-144-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="img/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="img/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="img/apple-touch-icon-57-precomposed.png">
-    <link rel="shortcut icon" href="img/favicon.png">
   </head>
-
   <body>
 
-    <div class="container-narrow">
-
-      <div class="masthead">
-        <ul class="nav nav-pills pull-right">
-          <li class="active"><a href="#"><i class="icon-home"></i> Home</a></li>
-          <li><a href="http://venerons.tumblr.com/" target="_blank"><i class="icon-pencil"></i> Blog</a></li>
-          <li><a href="labs.html"><i class="icon-wrench"></i> Labs</a></li>
-          <li><a href="donate.html"><i class="icon-heart"></i> Donate</a></li>
-          <li><a href="http://about.me/daniele.veneroni" target="_blank"><i class="icon-user"></i> About Me</a></li>
-        </ul>
-        <h3 class="muted">Venerons Lab*s</h3>
+    <!-- MAIN CARD -->
+    <div id="card">
+      <h1>Daniele Veneroni</h1>
+      <h3>Venerons Laboratories</h3>
+      <p>
+        <a id="aservices" href="#">Services</a> - <a id="asoftware" href="#">Software</a> - <a id="acontact" href="#">Contact</a> - <a id="adonate" href="#">Donate</a>
+      </p>
+      <div id="content">
+        <p>Loading...</p>
       </div>
+    </div>
 
-      <hr>
+    <!-- SERVICES -->
+    <div id="services" hidden>
+      <p class="gold">coming soon</p>
+    </div>
 
-      <div class="jumbotron">
-        <h1>Venerons Lab*s</h1>
-        <p class="lead">Perpetual Testing Laboratories</p>
-        <a class="btn btn-large btn-success" href="labs.html">Take a Tour</a>
-      </div>
+    <!-- SOFTWARE -->
+    <div id="software" hidden>
+      <p class="gold">coming soon</p>
+    </div>
 
-      <hr>
+    <!-- CONTACT -->
+    <div id="contact" hidden>
+      <table>
+        <tbody>
+          <tr>
+            <td style="text-align: right;">
+              <a href="http://venerons.elance.com" target="_blank">
+                Elance
+                &nbsp;&nbsp;
+                <img height="16" width="16" src="img/favicons/elance.ico">
+                &nbsp;&nbsp;
+              </a>
+              <br/>
+              <a href="http://about.me/daniele.veneroni" target="_blank">
+                About.me
+                &nbsp;&nbsp;
+                <img height="16" width="16" src="img/favicons/aboutme.ico">
+                &nbsp;&nbsp;
+              </a>
+              <br/>
+              <a href="https://github.com/Venerons" target="_blank">
+                GitHub
+                &nbsp;&nbsp;
+                <img height="16" width="16" src="img/favicons/github.ico">
+                &nbsp;&nbsp;
+              </a>
+              <br/>
+              <a href="http://osrc.dfm.io/Venerons" target="_blank">
+                Open Source Report Card
+                &nbsp;&nbsp;
+                <img height="16" width="16" src="img/favicons/github.ico">
+                &nbsp;&nbsp;
+              </a>
+              <br/>
+              <a href="http://slid.es/venerons/" target="_blank">
+                Slid.es
+                &nbsp;&nbsp;
+                <img height="16" width="16" src="img/favicons/slides.ico">
+                &nbsp;&nbsp;
+              </a>
+              <br/>
+              <a href="http://venerons.tumblr.com" target="_blank">
+                Tumblr
+                &nbsp;&nbsp;
+                <img height="16" width="16" src="img/favicons/tumblr.ico">
+                &nbsp;&nbsp;
+              </a>
+              <br/>&nbsp;
+            </td>
+            <td>
+              <a href="https://twitter.com/Venerons" target="_blank">
+                <img height="16" width="16" src="img/favicons/twitter.ico">
+                &nbsp;&nbsp;
+                Twitter
+              </a>
+              <br/>
+              <a href="https://plus.google.com/u/0/111061372673559554774" target="_blank">
+                <img height="16" width="16" src="img/favicons/googleplus.ico">
+                &nbsp;&nbsp;
+                Google+
+              </a>
+              <br/>
+              <a href="http://it.linkedin.com/in/venerons/" target="_blank">
+                <img height="16" width="16" src="img/favicons/linkedin.ico">
+                &nbsp;&nbsp;
+                LinkedIn
+              </a>
+              <br/>
+              <a href="https://soundcloud.com/venerons" target="_blank">
+                <img height="16" width="16" src="img/favicons/soundcloud.ico">
+                &nbsp;&nbsp;
+                SoundCloud
+              </a>
+              <br/>
+              <a href="http://500px.com/Venerons" target="_blank">
+                <img height="16" width="16" src="img/favicons/500px.ico">
+                &nbsp;&nbsp;
+                500px
+              </a>
+              <br/>
+              <a href="http://venerons.deviantart.com" target="_blank">
+                <img height="16" width="16" src="img/favicons/deviantart.png">
+                &nbsp;&nbsp;
+                deviantART
+              </a>
+              <br/>
+              <a href="http://www.youtube.com/user/Venerons" target="_blank">
+                <img height="16" width="16" src="img/favicons/youtube.ico">
+                &nbsp;&nbsp;
+                YouTube
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-      <div class="row-fluid marketing">
-        <h4>What is that?!</h4>
-        <p align="justify">The Venerons Laboratories are laboratories created by Daniele Veneroni for creative projects of various kinds, ranging from software development, photography, design, music and sound production, the production of short films and more.</p>
+    <!-- DONATE -->
+    <div id="donate" hidden>
+      <h4>Why donate to the Venerons Laboratories?</h4>
+      <p class="justify">The Venerons Laboratories aims to provide free and open tools to the community, and to provide good environments that encourage creativity and open thougth.</p>
+      <p class="justify">By the way, all this work have their cost, and takes a lot of free time hours.</p>
+      <p class="justify">Donations help to support costs and are a mental reenforcement to me that the work I do matters. More donations I receive, the more I'm motivated to spend my free time working on Venerons Laboratories projects.</p>
 
-        <p align="justify">Often projects are initiated and then maintained or developed by the community and not just by the laboratories themselves. The purpose of Venerons Laboratories is to provide tools to the community or to create environments that encourage creativity and free thought.</p>
-      </div>
+      <table>
+        <tbody>
+          <tr>
+            <td class="center">
+              <p class="gold">Gittip</p>
+              <iframe style="border: 0; margin: 0; padding: 0;" src="https://www.gittip.com/Venerons/widget.html" width="48" height="22"></iframe>
+            </td>
+            <td class="center">
+              <p class="gold">PayPal</p>
+              <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+                <input type="hidden" name="cmd" value="_s-xclick">
+                <input type="hidden" name="hosted_button_id" value="ALHD253G498PN">
+                <input type="image" src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal – The safer, easier way to pay online.">
+                <img alt="" border="0" src="https://www.paypalobjects.com/it_IT/i/scr/pixel.gif" width="1" height="1">
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br/>
+    </div>
 
-      <hr>
+    <!-- FOOTER -->
+    <footer>
+      <p>© Daniele Veneroni 2013</p>
+    </footer>
 
-      <div class="footer">
-        <p>© Daniele Veneroni 2013</p>
-      </div>
+    <!-- SCRIPT -->
+    <script type="text/javascript">
+      var cards = {};
+      var content;
+      window.onload = function () {
+        content = document.getElementById("content");
+        cards.services = document.getElementById("services");
+        cards.software = document.getElementById("software");
+        cards.contact = document.getElementById("contact");
+        cards.donate = document.getElementById("donate");
+        content.innerHTML = cards.contact.innerHTML;
 
-    </div> <!-- /container -->
-
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="js/jquery.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+        document.getElementById("aservices").onclick = function () { content.innerHTML = cards.services.innerHTML; };
+        document.getElementById("asoftware").onclick = function () { content.innerHTML = cards.software.innerHTML; };
+        document.getElementById("acontact").onclick = function () { content.innerHTML = cards.contact.innerHTML; };
+        document.getElementById("adonate").onclick = function () { content.innerHTML = cards.donate.innerHTML; };
+      };
+    </script>
 
   </body>
 </html>
