@@ -1,5 +1,5 @@
-<!-- Copyright (c) 2013 Daniele Veneroni -->
 <!DOCTYPE html>
+<!-- Copyright (c) 2013 Daniele Veneroni -->
 <html lang="en">
   <head>
     <title>Venerons Lab*s</title>
@@ -106,7 +106,7 @@
         <a id="aservices" href="#">Services</a> - <a id="asoftware" href="#">Software</a> - <a id="acontact" href="#">Contact</a> - <a id="adonate" href="#">Donate</a>
       </p>
       <div id="content">
-        <p>Loading...</p>
+        <p class="gold">Loading...</p>
       </div>
     </div>
 
@@ -255,7 +255,7 @@
     <script type="text/javascript">
       var cards = {};
       var content;
-      window.onload = function () {
+      document.addEventListener('DOMContentLoaded', function() {
         content = document.getElementById("content");
         cards.services = document.getElementById("services");
         cards.software = document.getElementById("software");
@@ -267,7 +267,7 @@
         document.getElementById("asoftware").onclick = function () { content.innerHTML = cards.software.innerHTML; };
         document.getElementById("acontact").onclick = function () { content.innerHTML = cards.contact.innerHTML; };
         document.getElementById("adonate").onclick = function () { content.innerHTML = cards.donate.innerHTML; };
-      };
+      });
     </script>
 
   </body>
