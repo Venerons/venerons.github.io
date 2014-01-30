@@ -69,8 +69,13 @@
 
 			div#card {
 				position: fixed;
-				top: 20%;
-				left: 25%;
+				top: 50%;
+				left: 50%;
+				transform: translateX(-50%) translateY(-50%);
+				-webkit-transform: translateX(-50%) translateY(-50%);
+				-ms-transform: translateX(-50%) translateY(-50%); /* only for IE9, useless as of IE10+ */
+				-o-transform: translateX(-50%) translateY(-50%);
+				-moz-transform: translateX(-50%) translateY(-50%); /* useless as of FF16+ */
 				width: 50%;
 				min-width: 280px;
 				height: auto;
@@ -322,7 +327,7 @@
 
 		<!-- FOOTER -->
 		<footer>
-			<p>© Daniele Veneroni 2013</p>
+			<p>© Daniele Veneroni 2014</p>
 		</footer>
 
 		<!-- SCRIPT -->
