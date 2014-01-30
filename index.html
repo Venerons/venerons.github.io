@@ -327,20 +327,41 @@
 
 		<!-- SCRIPT -->
 		<script type="text/javascript">
-			var cards = {};
-			var content;
-			document.addEventListener('DOMContentLoaded', function() {
-				content = document.getElementById("content");
-				cards.services = document.getElementById("services");
-				cards.software = document.getElementById("software");
-				cards.contact = document.getElementById("contact");
-				cards.donate = document.getElementById("donate");
-				content.innerHTML = cards.contact.innerHTML;
+			var cards = {},
+				content;
 
-				document.getElementById("aservices").onclick = function () { content.innerHTML = cards.services.innerHTML; };
-				document.getElementById("asoftware").onclick = function () { content.innerHTML = cards.software.innerHTML; };
-				document.getElementById("acontact").onclick = function () { content.innerHTML = cards.contact.innerHTML; };
-				document.getElementById("adonate").onclick = function () { content.innerHTML = cards.donate.innerHTML; };
+			function switchTo(page) {
+				content.innerHTML = page.innerHTML;
+			}
+
+			document.addEventListener('DOMContentLoaded', function() {
+				content = document.getElementById('content');
+				cards.services = document.getElementById('services');
+				cards.software = document.getElementById('software');
+				cards.contact = document.getElementById('contact');
+				cards.donate = document.getElementById('donate');
+
+				switchTo(cards.contact);
+
+				document.getElementById('aservices').onclick = function () { switchTo(cards.services); };
+				document.getElementById('asoftware').onclick = function () { switchTo(cards.software); };
+				document.getElementById('acontact').onclick = function () { switchTo(cards.contact); };
+				document.getElementById('adonate').onclick = function () { switchTo(cards.donate); };
+
+				if ('onhashchange' in window) {
+					window.addEventListener('hashchange', function (e) {
+						if (location.hash === '#services') {
+							switchTo(cards.services);
+						} else if (location.hash === '#software') {
+							switchTo(cards.software);
+						} else if (location.hash === '#donate') {
+							switchTo(cards.donate);
+						} else {
+							// default
+							switchTo(cards.contact);
+						}
+					}, false);
+				}
 			}, false);
 		</script>
 
