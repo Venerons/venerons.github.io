@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Comet</title>
+		<meta name="application-name" content="Comet">
+		<meta name="author" content="Daniele Veneroni">
+		<meta name="creator" content="Daniele Veneroni">
+		<meta name="publisher" content="Daniele Veneroni">
+		<meta name="description" content="Comet Synth">
+		<meta name="keywords" content="comet,synth,web,audio,sound">
+
+		<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Audiowide">
+		<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Monoton">
+		<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Orbitron:400,500,700,900">
+		<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Montserrat:400,700">
+		<link rel="stylesheet" href="css/font-awesome/css/font-awesome.min.css">
+		<link rel="stylesheet" href="css/style.css">
+	</head>
+	<body>
+		<div id="splash-screen">
+			<h1>COMET</h1>
+		</div>
+
+		<canvas id="surface"></canvas>
+		<div id="keyboard" hidden></div>
+		<button id="menu-button"><i class="fa fa-bars fa-lg"></i></button>
+
+		<div id="menu" style="display: none">
+			<h1>COMET</h1>
+			<p>Coded with <i class="fa fa-heart" style="color: #d34d2e"></i> by <a href="http://codepen.io/Venerons/" target="_blank">Daniele Veneroni</a></p>
+			<div class="version">1.0.0</div>
+			<button id="menu-close" title="Close"><i class="fa fa-times fa-lg"></i></button>
+
+			<div class="module-container">
+				<!-- PRESET -->
+				<div id="module-preset" class="module">
+					<h1>PRESET</h1>
+					<select id="preset-id" title="Preset" style="width: 100%">
+						<option value="none">none</option>
+					</select>
+					<button id="preset-save">Save</button>
+					<button id="preset-export">Export</button>
+				</div>
+
+				<!-- OSCILLATOR -->
+				<div id="module-osc" class="module">
+					<h1>OSCILLATOR</h1>
+					<select id="osc1-type">
+						<option value="sine">Sine</option>
+						<option value="sawtooth">Sawtooth</option>
+						<option value="square">Square</option>
+						<option value="triangle">Triangle</option>
+						<!--<option value="whitenoise">White Noise</option>-->
+						<!--<option value="pinknoise">Pink Noise</option>-->
+						<!--<option value="brownnoise">Brownian Noise</option>-->
+					</select>
+					<div class="knob-block">
+						<input id="osc1-detune" type="text" data-skin="tron">
+						<label for="osc1-detune">Detune</label>
+					</div>
+
+					<h1>SUB OSCILLATOR</h1>
+					<select id="osc2-type">
+						<option value="none">none</option>
+						<option value="sine">Sine</option>
+						<option value="sawtooth">Sawtooth</option>
+						<option value="square">Square</option>
+						<option value="triangle">Triangle</option>
+						<!--<option value="whitenoise">White Noise</option>-->
+						<!--<option value="pinknoise">Pink Noise</option>-->
+						<!--<option value="brownnoise">Brownian Noise</option>-->
+					</select>
+					<div class="knob-block">
+						<input id="osc2-detune" type="text" data-skin="tron">
+						<label for="osc2-detune">Detune</label>
+					</div>
+				</div>
+
+				<!-- LFO -->
+				<!--
+				<div id="module-lfo" class="module">
+					<h1>LFO</h1>
+					<select id="lfo-type">
+						<option value="sine">Sine</option>
+						<option value="sawtooth">Sawtooth</option>
+						<option value="square">Square</option>
+						<option value="triangle">Triangle</option>
+					</select>
+					<div class="knob-block">
+						<input id="lfo-detune" type="text" value="0"
+							data-min="-1200"
+							data-max="1200"
+							data-step="1"
+							data-width="50"
+							data-height="50"
+							data-fgColor="gold"
+							data-angleOffset="180"
+							data-thickness="0.2"
+							data-skin="tron">
+						<label for="lfo-detune">Detune</label>
+					</div>
+				</div>
+				-->
+
+				<!-- BIQUAD FILTER -->
+				<div id="module-filter" class="module">
+					<h1>BIQUAD FILTER</h1>
+					<select id="filter-type" title="Filter Type">
+						<option value="lowpass">Low Pass Filter</option>
+						<option value="highpass">High Pass Filter</option>
+						<option value="bandpass">Band Pass Filter</option>
+						<option value="lowshelf">Low Shelf Filter</option>
+						<option value="highshelf">High Shelf Filter</option>
+						<option value="peaking">Peaking Filter</option>
+						<option value="notch">Notch Filter</option>
+						<option value="allpass">All Pass Filter</option>
+					</select>
+					<div class="knob-block">
+						<input id="filter-frequency" type="text" data-skin="tron">
+						<label for="filter-frequency">Frequency</label>
+					</div>
+					<div class="knob-block">
+						<input id="filter-quality" type="text" data-skin="tron">
+						<label for="filter-quality">Quality</label>
+					</div>
+					<div class="knob-block">
+						<input id="filter-gain" type="text" data-skin="tron">
+						<label for="filter-gain">Gain</label>
+					</div>
+				</div>
+
+				<!-- EFFECT -->
+				<div id="module-effect" class="module">
+					<h1>EFFECT</h1>
+					<select id="effect-type" title="Effect Type">
+						<option value="none">none</option>
+						<option value="noiseconvolver">Noise Convolver</option>
+						<option value="pinkingfilter">Pinking Filter</option>
+						<option value="moogfilter">Moog Filter</option>
+						<option value="bitcrusher">BitCrusher</option>
+						<!--<option value="delay">Delay</option>-->
+					</select>
+					<div id="moogfilter-settings" style="display: none">
+						<div class="knob-block">
+							<input id="moogfilter-cutoff" type="text" data-skin="tron">
+							<label for="moogfilter-cutoff">Cutoff</label>
+						</div>
+						<div class="knob-block">
+							<input id="moogfilter-resonance" type="text" data-skin="tron">
+							<label for="moogfilter-resonance">Resonance</label>
+						</div>
+					</div>
+					<div id="bitcrusher-settings" style="display: none">
+						<div class="knob-block">
+							<input id="bitcrusher-bits" type="text" data-skin="tron">
+							<label for="bitcrusher-bits">Bits</label>
+						</div>
+						<div class="knob-block">
+							<input id="bitcrusher-normfreq" type="text" data-skin="tron">
+							<label for="bitcrusher-normfreq">Normalize Frequency</label>
+						</div>
+					</div>
+					<div id="delay-settings" style="display: none">
+						<div class="knob-block">
+							<input id="delay-time" type="text" data-skin="tron">
+							<label for="delay-time">Time</label>
+						</div>
+						<div class="knob-block">
+							<input id="delay-feedback" type="text" data-skin="tron">
+							<label for="delay-feedback">Feedback</label>
+						</div>
+					</div>
+				</div>
+
+				<!-- GRAPHICS -->
+				<div id="module-graphics" class="module">
+					<h1>GRAPHICS</h1>
+					<select id="graphics-type" title="Graphic Type">
+						<option value="none">none</option>
+						<option value="classicspectrum">Classic Spectrum</option>
+						<option value="circularspectrum" selected>Circular Spectrum</option>
+						<option value="insetcircularspectrum">Inset Circular Spectrum</option>
+						<option value="blackboard">Blackboard</option>
+						<!--<option value="oscilloscope">Oscilloscope</option>-->
+						<!--<option value="bugs">Running Bugs</option>-->
+						<!--<option value="drops">Fading Drops</option>-->
+					</select>
+				</div>
+
+				<!-- SETTINGS -->
+				<div id="module-settings" class="module">
+					<h1>SETTINGS</h1>
+					<label for="settings-buffer">Buffer Size</label>
+					<select id="settings-buffer">
+						<option value="64">64</option>
+						<option value="128">128</option>
+						<option value="258">258</option>
+						<option value="512">512</option>
+						<option value="1024">1024</option>
+						<option value="2048" selected>2048</option>
+						<option value="4096">4096</option>
+					</select>
+					<h1>INPUTS</h1>
+					<button id="inputs-mic" title="Microphone"><i class="fa fa-microphone fa-lg"></i></button>
+					<button id="inputs-file" title="Audio File"><i class="fa fa-file-audio-o fa-lg"></i></button>
+					<button id="inputs-midi" title="MIDI"><i class="fa fa-plug fa-lg"></i></button>
+				</div>
+			</div>
+		</div>
+
+		<script type="application/javascript" src="js/lib/palette.min.js"></script>
+		<script type="application/javascript" src="js/lib/hand-1.3.8.js"></script>
+		<script type="application/javascript" src="js/lib/localforage.js"></script>
+		<script type="application/javascript" src="js/lib/jquery-2.1.1.min.js"></script>
+		<script type="application/javascript" src="js/lib/jquery.knob.min.js"></script>
+		<script type="application/javascript" src="js/lib/raphael-2.1.2.js"></script>
+		<script type="application/javascript" src="js/lib/qwerty-hancock.js"></script>
+		<script type="application/javascript" src="js/comet.js"></script>
+	</body>
+</html>
