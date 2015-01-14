@@ -10,12 +10,14 @@
 		<meta name="description" content="Comet Synth">
 		<meta name="keywords" content="comet,synth,web,audio,sound">
 
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+
 		<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Audiowide">
 		<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Monoton">
-		<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Orbitron:400,500,700,900">
-		<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Montserrat:400,700">
-		<link rel="stylesheet" href="css/font-awesome/css/font-awesome.min.css">
-		<link rel="stylesheet" href="css/style.css">
+		<link rel="stylesheet" type="text/css" href="css/font-awesome/css/font-awesome.min.css">
+		<link rel="stylesheet" type="text/css" href="css/style.css">
 	</head>
 	<body>
 		<div id="splash-screen">
@@ -27,10 +29,12 @@
 		<button id="menu-button"><i class="fa fa-bars fa-lg"></i></button>
 
 		<div id="menu" style="display: none">
-			<h1>COMET</h1>
-			<p>Coded with <i class="fa fa-heart" style="color: #d34d2e"></i> by <a href="http://codepen.io/Venerons/" target="_blank">Daniele Veneroni</a></p>
-			<div class="version">1.0.0</div>
-			<button id="menu-close" title="Close"><i class="fa fa-times fa-lg"></i></button>
+			<div id="menu-header">
+				<h1>COMET</h1>
+				<p>Coded with <i class="fa fa-heart" style="color: #d34d2e"></i> by <a href="http://codepen.io/Venerons/" target="_blank">Daniele Veneroni</a></p>
+				<div class="version">1.0.0</div>
+				<button id="menu-close" title="Close"><i class="fa fa-times fa-lg"></i></button>
+			</div>
 
 			<div class="module-container">
 				<!-- PRESET -->

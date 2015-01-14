@@ -297,9 +297,9 @@ $('#osc1-detune').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
-		for (var i = 0; i < keyNodes.length; ++i) {
-			keyNodes[i].osc1.detune.value = value;
-		}
+		oscMap.forEach(function (node, key) {
+			node.osc1.detune.value = value;
+		});
 	}
 }).trigger('change');
 
@@ -314,11 +314,11 @@ $('#osc2-detune').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
-		for (var i = 0; i < keyNodes.length; ++i) {
-			if (keyNodes[i].osc2) {
-				keyNodes[i].osc2.detune.value = value;
+		oscMap.forEach(function (node, key) {
+			if (node.osc2) {
+				node.osc2.detune.value = value;
 			}
-		}
+		});
 	}
 }).trigger('change');
 
@@ -334,8 +334,8 @@ $('#filter-frequency').val(SYNTH.context.sampleRate / 2).knob({
 	min: 40,
 	max: SYNTH.context.sampleRate / 2,
 	step: 1,
-	width: 50,
-	height: 50,
+	width: 100,
+	height: 100,
 	fgColor: '#3DC186',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -352,8 +352,8 @@ $('#filter-quality').val(0).knob({
 	min: 0, // 0.0001
 	max: 30, // 1000
 	step: 0.03, // 0.0001
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#3DC186',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -673,24 +673,21 @@ $('#graphics-type').on('change', function () {
 		SYNTH.script = (function () {
 			var node = SYNTH.context.createScriptProcessor(bufferSize, 1, 1);
 			var maxSpectrumHeight = paper.height / 4 * 3;
-			//var previous = performance.now();
 			node.onaudioprocess = function (e) {
-				//var now = performance.now();
-				//if ((now - previous) >= 16) {// max 60 FPS
-					var array = new Uint8Array(SYNTH.analyser.frequencyBinCount);
-					SYNTH.analyser.getByteFrequencyData(array);
-
-					paper.clear(0, 0, paper.width, paper.height);
-					var gap = paper.width / (array.length * 2);
-					for (var i = 0; i < (array.length); i++){
-						var newy = paper.height - (maxSpectrumHeight * array[i] / 256);
-						paper.rect(i * (gap * 2), newy, gap, paper.height, 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)');
-					}
-
-					//var fps = 1000 / (now - previous);
-					//paper.text('FPS: ' + Math.round(fps), 15, 20);
-					//previous = now;
-				//}
+				var array = new Uint8Array(SYNTH.analyser.frequencyBinCount);
+				SYNTH.analyser.getByteFrequencyData(array);
+				paper.clear();
+				var gap = paper.width / (array.length * 2);
+				for (var i = 0; i < array.length; ++i){
+					var newy = paper.height - (maxSpectrumHeight * array[i] / 256);
+					paper.rect({
+						x: i * (gap * 2),
+						y: newy,
+						width: gap,
+						height: paper.height,
+						fill: 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)'
+					});
+				}
 			};
 			return node;
 		})();
@@ -700,37 +697,37 @@ $('#graphics-type').on('change', function () {
 		// ##############################################
 		SYNTH.script = (function () {
 			var node = SYNTH.context.createScriptProcessor(bufferSize, 1, 1);
-			//var previous = performance.now();
 			node.onaudioprocess = function () {
-				//var now = performance.now();
-				//if ((now - previous) >= 16) {// max 60 FPS
-					var array = new Uint8Array(SYNTH.analyser.frequencyBinCount);
-					SYNTH.analyser.getByteFrequencyData(array);
+				var array = new Uint8Array(SYNTH.analyser.frequencyBinCount);
+				SYNTH.analyser.getByteFrequencyData(array);
 
-					var degIncrement = 360 / array.length,
-						centerX = window.innerWidth / 2,
-						centerY = window.innerHeight / 2,
-						circleR = 80,
-						maxLength = circleR * 3; //window.innerWidth < window.innerHeight ? window.innerWidth / 2 - circleR * 2: window.innerHeight / 2 - circleR * 2;
+				var degIncrement = 360 / array.length,
+					centerX = window.innerWidth / 2,
+					centerY = window.innerHeight / 2,
+					circleR = 80,
+					maxLength = circleR * 3; //window.innerWidth < window.innerHeight ? window.innerWidth / 2 - circleR * 2: window.innerHeight / 2 - circleR * 2;
 
-					paper.clear(0, 0, paper.width, paper.height);
+				paper.clear();
 
-					for (var i = 0; i < array.length; ++i) {
-						var angle = ((i * degIncrement) * Math.PI) / 180,
-							preX = Math.cos(angle),
-							preY = Math.sin(angle),
-							x = centerX + preX * circleR,
-							y = centerY + preY * circleR,
-							barValue = (array[i] * maxLength / 512) + circleR,
-							dx = centerX + preX * barValue,
-							dy = centerY + preY * barValue;
-						paper.line(x, y, dx, dy, 'miter', 1, 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)');
-					}
-
-					//var fps = 1000 / (now - previous);
-					//paper.text('FPS: ' + Math.round(fps), 15, 20);
-					//previous = now;
-				//}
+				for (var i = 0; i < array.length; ++i) {
+					var angle = ((i * degIncrement) * Math.PI) / 180,
+						preX = Math.cos(angle),
+						preY = Math.sin(angle),
+						x = centerX + preX * circleR,
+						y = centerY + preY * circleR,
+						barValue = (array[i] * maxLength / 512) + circleR,
+						dx = centerX + preX * barValue,
+						dy = centerY + preY * barValue;
+					paper.line({
+						x1: x,
+						y1: y,
+						x2: dx,
+						y2: dy,
+						stroke: 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)',
+						join: 'miter',
+						thickness: 1
+					});
+				}
 			};
 			return node;
 		})();
@@ -740,37 +737,37 @@ $('#graphics-type').on('change', function () {
 		// ##############################################
 		SYNTH.script = (function () {
 			var node = SYNTH.context.createScriptProcessor(bufferSize, 1, 1);
-			//var previous = performance.now();
 			node.onaudioprocess = function () {
-				//var now = performance.now();
-				//if ((now - previous) >= 16) {// max 60 FPS
-					var array = new Uint8Array(SYNTH.analyser.frequencyBinCount);
-					SYNTH.analyser.getByteFrequencyData(array);
+				var array = new Uint8Array(SYNTH.analyser.frequencyBinCount);
+				SYNTH.analyser.getByteFrequencyData(array);
 
-					var degIncrement = 360 / array.length,
-						centerX = window.innerWidth / 2,
-						centerY = window.innerHeight / 2,
-						circleR = 240,
-						maxLength = circleR;
+				var degIncrement = 360 / array.length,
+					centerX = window.innerWidth / 2,
+					centerY = window.innerHeight / 2,
+					circleR = 240,
+					maxLength = circleR;
 
-					paper.clear(0, 0, paper.width, paper.height);
+				paper.clear();
 
-					for (var i = 0; i < array.length; ++i) {
-						var angle = ((i * degIncrement) * Math.PI) / 180,
-							preX = Math.cos(angle),
-							preY = Math.sin(angle),
-							x = centerX + preX * circleR,
-							y = centerY + preY * circleR,
-							barValue = -(array[i] * maxLength / 512) + circleR,
-							dx = centerX + preX * barValue,
-							dy = centerY + preY * barValue;
-						paper.line(x, y, dx, dy, 'miter', 1, 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)');
-					}
-
-					//var fps = 1000 / (now - previous);
-					//paper.text('FPS: ' + Math.round(fps), 15, 20);
-					//previous = now;
-				//}
+				for (var i = 0; i < array.length; ++i) {
+					var angle = ((i * degIncrement) * Math.PI) / 180,
+						preX = Math.cos(angle),
+						preY = Math.sin(angle),
+						x = centerX + preX * circleR,
+						y = centerY + preY * circleR,
+						barValue = -(array[i] * maxLength / 512) + circleR,
+						dx = centerX + preX * barValue,
+						dy = centerY + preY * barValue;
+					paper.line({
+						x1: x,
+						y1: y,
+						x2: dx,
+						y2: dy,
+						stroke: 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)',
+						join: 'miter',
+						thickness: 1
+					});
+				}
 			};
 			return node;
 		})();
@@ -779,25 +776,27 @@ $('#graphics-type').on('change', function () {
 		// # BLACKBOARD                                 #
 		// ##############################################
 		var draw = function () {
+			/*
 			paper.context.globalAlpha = 0.5;
-			paper.rect(0, 0, paper.width, paper.height, '#333');
-			//paper.clear(0, 0, paper.width, paper.height);
-			for (var i = 0; i < points.length; ++i) {
-				paper.context.save();
-				paper.context.globalAlpha = 1;
-				paper.context.shadowColor = points[i].color;
-				paper.context.shadowBlur = 20;
-				paper.context.shadowOffsetX = 0;
-				paper.context.shadowOffsetY = 0;
-				//var grd = paper.context.createRadialGradient(points[i].x, points[i].y, 0, points[i].x, points[i].y, 50);
-				//grd.addColorStop(0, 'whitesmoke');
-				//grd.addColorStop(1, points[i].color);
-				//paper.context.fillStyle = grd;
-				//paper.context.fill();
-				//paper.circle(points[i].x, points[i].y, 50);//, points[i].color);
-				paper.circle(points[i].x, points[i].y, 50, points[i].color);
-				paper.context.restore();
-			}
+			paper.rect({
+				x: 0,
+				y: 0,
+				width: paper.width,
+				height: paper.height,
+				fill: '#333'
+			});
+			paper.context.globalAlpha = 1;
+			*/
+			paper.clear();
+			points.forEach(function (point, key) {
+				paper.circle({
+					x: point.x,
+					y: point.y,
+					r: 50,
+					fill: point.color,
+					shadow: '0 0 20 ' + point.color
+				});
+			});
 			SYNTH.animation = requestAnimationFrame(draw);
 		};
 		SYNTH.animation = requestAnimationFrame(draw);

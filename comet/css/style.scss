@@ -31,6 +31,7 @@ button {
 	background: transparent;
 	border: 1px solid whitesmoke;
 	cursor: pointer;
+	padding: 0 0.3rem;
 
 	&:hover {
 		background: rgba(255, 255, 255, 0.1);
@@ -64,6 +65,7 @@ select {
 	border: 1px solid whitesmoke;
 	border-radius: 5px;
 	background: transparent;
+	cursor: pointer;
 
 	option {
 		padding: 0.1rem;
@@ -115,22 +117,7 @@ select {
 	right: 1rem;
 }
 
-#menu {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	width: 80%;
-	min-width: 300px;
-	max-width: 100%;
-	max-height: 95%;
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	border-radius: 5px;
-	background: #333;
-	box-shadow: 0 0 10px #111;
-	overflow: auto;
-	padding: 0.5rem;
-
+#menu-header {
 	> h1 {
 		margin: 0.5rem;
 		color: #288edf;
@@ -156,6 +143,23 @@ select {
 		color: rgba(255, 255, 255, 0.1);
 		border-color: rgba(255, 255, 255, 0.1);
 	}
+}
+
+#menu {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 80%;
+	min-width: 300px;
+	max-width: 100%;
+	max-height: 95%;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 5px;
+	background: #333;
+	box-shadow: 0 0 10px #111;
+	overflow: auto;
+	padding: 0.5rem;
 
 	.module-container {
 		display: flex;
