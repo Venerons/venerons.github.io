@@ -1087,6 +1087,13 @@ localforage.getItem('presets', function (error, value) {
 	}
 });
 
+// ##############################################
+// # FIXS & UTILITIES                           #
+// ##############################################
+
+$(document).on('touchmove', function (e) {
+	e.preventDefault();
+});
 
 
 /*
