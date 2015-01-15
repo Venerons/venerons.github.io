@@ -131,68 +131,107 @@ setTimeout(function () {
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var SYNTH = {};
 SYNTH.context = new AudioContext();
-
-SYNTH.filter = SYNTH.context.createBiquadFilter();
-SYNTH.filter.frequency.value = SYNTH.context.sampleRate / 2;
-
 SYNTH.master = SYNTH.context.createGain();
 SYNTH.master.gain.value = 0.5;
-
-SYNTH.filter.connect(SYNTH.master);
 SYNTH.master.connect(SYNTH.context.destination);
 
-var oscMap = new Map();
+var SOUNDSMAP = new Map();
 
-SYNTH.createOscillator = function (type, id, frequency, event) {
-	var keyNode = {
-		type: type,
-		id: id
-	};
+SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
+
+	// OSCILLATOR 1
 
 	var osc1 = SYNTH.context.createOscillator();
-	osc1.type = $('#osc1-type').val();
+	osc1.type = $('#osc1-type').val(); // todo settings
 	osc1.frequency.value = frequency;
-	osc1.detune.value = $('#osc1-detune').val();
-	osc1.connect(SYNTH.filter);
+	osc1.detune.value = parseFloat($('#osc1-detune').val()); // todo settings
 	osc1.start(0);
-	keyNode.osc1 = osc1;
+	var mix1 = SYNTH.context.createGain();
+	mix1.gain.value = parseFloat($('#osc1-mix').val()); // todo settings
+
+	// OSCILLATOR 2
 
 	if ($('#osc2-type').val() !== 'none') {
 		var osc2 = SYNTH.context.createOscillator();
-		osc2.type = $('#osc2-type').val();
+		osc2.type = $('#osc2-type').val(); // todo settings
 		osc2.frequency.value = frequency;
-		osc2.detune.value = $('#osc2-detune').val();
-		osc2.connect(SYNTH.filter);
+		osc2.detune.value = parseFloat($('#osc2-detune').val()); // todo settings
 		osc2.start(0);
-		keyNode.osc2 = osc2;
+
+		var mix2 = SYNTH.context.createGain();
+		mix2.gain.value = parseFloat($('#osc2-mix').val()); // todo settings
 	}
 
-	if (oscMap.has(type + '-' + id)) {
-		removeOscillator(type, id);
+	// VELOCITY GAIN
+
+	var velocityGain = SYNTH.context.createGain();
+	velocityGain.gain.value = velocity;
+
+	// BIQUAD FILTER
+
+	var filter = SYNTH.context.createBiquadFilter();
+	filter.type = $('#filter-type').val(); // todo settings
+	filterFrequency = filterFrequency || parseFloat($('#filter-frequency').val());
+	filter.frequency.value = Math.min(filterFrequency, SYNTH.context.sampleRate / 2); // todo settings
+	filter.detune.value = 0; // todo settings
+	filter.Q.value = parseFloat($('#filter-quality').val()); // todo settings
+	filter.gain.value = parseFloat($('#filter-gain').val()); // todo settings
+
+	// CONNECTIONS
+
+	osc1.connect(mix1);
+	mix1.connect(velocityGain);
+
+	if ($('#osc2-type').val() !== 'none') {
+		osc2.connect(mix2);
+		mix2.connect(velocityGain);
 	}
-	oscMap.set(type + '-' + id, keyNode);
+
+	velocityGain.connect(filter);
+	filter.connect(SYNTH.master);
+
+	if (SOUNDSMAP.has(id)) {
+		SYNTH.removeSound(id);
+	}
+	SOUNDSMAP.set(id, {
+		id: id,
+		osc1: { osc: osc1, mix: mix1 },
+		osc2: $('#osc2-type').val() !== 'none' ? { osc: osc2, mix: mix2 } : null,
+		velocity: velocityGain,
+		filter: filter
+	});
 };
 
-SYNTH.updateOscillator = function (type, id, frequency) {
-	if (oscMap.has(type + '-' + id)) {
-		var keyNode = oscMap.get(type + '-' + id);
-		keyNode.osc1.frequency.value = frequency;
-		if (keyNode.osc2) {
-			keyNode.osc2.frequency.value = frequency;
+SYNTH.updateSound = function (id, frequency, velocity, filterFrequency) {
+	if (SOUNDSMAP.has(id)) {
+		var sound = SOUNDSMAP.get(id);
+		sound.osc1.osc.frequency.value = frequency;
+		if (sound.osc2 !== null) {
+			sound.osc2.osc.frequency.value = frequency;
+		}
+		if (velocity !== null) {
+			sound.velocity.gain.value = velocity;
+		}
+		if (filterFrequency !== null) {
+			sound.filter.frequency.value = filterFrequency;
 		}
 	}
 };
 
-SYNTH.removeOscillator = function (type, id) {
-	if (oscMap.has(type + '-' + id)) {
-		var keyNode = oscMap.get(type + '-' + id);
-		keyNode.osc1.stop(0);
-		keyNode.osc1.disconnect();
-		if (keyNode.osc2) {
-			keyNode.osc2.stop(0);
-			keyNode.osc2.disconnect();
+SYNTH.removeSound = function (id) {
+	if (SOUNDSMAP.has(id)) {
+		var sound = SOUNDSMAP.get(id);
+		sound.osc1.osc.stop(0);
+		sound.osc1.osc.disconnect();
+		sound.osc1.mix.disconnect();
+		if (sound.osc2 !== null) {
+			sound.osc2.osc.stop(0);
+			sound.osc2.osc.disconnect();
+			sound.osc2.mix.disconnect();
 		}
-		oscMap.delete(type + '-' + id);
+		sound.velocity.disconnect();
+		sound.filter.disconnect();
+		SOUNDSMAP.delete(id);
 	}
 };
 
@@ -203,11 +242,11 @@ SYNTH.removeOscillator = function (type, id) {
 $('#lfo-detune, #delay-time, #delay-feedback').knob();
 
 $('#menu-button').on('click', function () {
-	$('#menu').fadeIn();
+	$('#menu').show();
 });
 
 $('#surface, #menu-close').on('click', function () {
-	$('#menu').fadeOut();
+	$('#menu').hide();
 });
 
 // ##############################################
@@ -297,8 +336,25 @@ $('#osc1-detune').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
-		oscMap.forEach(function (node, key) {
-			node.osc1.detune.value = value;
+		SOUNDSMAP.forEach(function (sound, id) {
+			sound.osc1.osc.detune.value = value;
+		});
+	}
+}).trigger('change');
+
+$('#osc1-mix').val(1).knob({
+	min: 0,
+	max: 1,
+	step: 0.1,
+	width: 50,
+	height: 50,
+	fgColor: '#FF9900',
+	angleOffset: 180,
+	thickness: 0.2,
+	font: 'Audiowide',
+	change: function (value) {
+		SOUNDSMAP.forEach(function (sound, id) {
+			sound.osc1.mix.gain.value = value;
 		});
 	}
 }).trigger('change');
@@ -314,9 +370,28 @@ $('#osc2-detune').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
-		oscMap.forEach(function (node, key) {
-			if (node.osc2) {
-				node.osc2.detune.value = value;
+		SOUNDSMAP.forEach(function (sound, id) {
+			if (sound.osc2 !== null) {
+				sound.osc2.osc.detune.value = value;
+			}
+		});
+	}
+}).trigger('change');
+
+$('#osc2-mix').val(1).knob({
+	min: 0,
+	max: 1,
+	step: 0.1,
+	width: 50,
+	height: 50,
+	fgColor: '#FF9900',
+	angleOffset: 180,
+	thickness: 0.2,
+	font: 'Audiowide',
+	change: function (value) {
+		SOUNDSMAP.forEach(function (sound, id) {
+			if (sound.osc2 !== null) {
+				sound.osc2.mix.gain.value = value;
 			}
 		});
 	}
@@ -327,7 +402,9 @@ $('#osc2-detune').val(0).knob({
 // ##############################################
 
 $('#filter-type').on('change', function () {
-	SYNTH.filter.type = $(this).val();
+	SOUNDSMAP.forEach(function (sound, id) {
+		sound.filter.type = $(this).val();
+	});
 }).trigger('change');
 
 $('#filter-frequency').val(SYNTH.context.sampleRate / 2).knob({
@@ -341,7 +418,9 @@ $('#filter-frequency').val(SYNTH.context.sampleRate / 2).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
-		SYNTH.filter.frequency.value = value;
+		SOUNDSMAP.forEach(function (sound, id) {
+			sound.filter.frequency.value = value;
+		});
 	},
 	format: function (value) {
 		return value + ' Hz'
@@ -359,7 +438,9 @@ $('#filter-quality').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
-		SYNTH.filter.Q.value = value;
+		SOUNDSMAP.forEach(function (sound, id) {
+			sound.filter.Q.value = value;
+		});
 	}
 }).trigger('change');
 
@@ -374,7 +455,9 @@ $('#filter-gain').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
-		SYNTH.filter.gain.value = value;
+		SOUNDSMAP.forEach(function (sound, id) {
+			sound.filter.gain.value = value;
+		});
 	}
 }).trigger('change');
 
@@ -400,6 +483,8 @@ var effect = (function() {
 })();
 
 //*/
+
+/*
 
 $('#effect-type').on('change', function () {
 	$('#delay-settings, #moogfilter-settings, #bitcrusher-settings').hide();
@@ -532,6 +617,7 @@ $('#effect-type').on('change', function () {
 		})();
 	}
 	*/
+	/*
 
 	if (SYNTH.effect) {
 		SYNTH.filter.connect(SYNTH.effect);
@@ -805,6 +891,7 @@ $('#graphics-type').on('change', function () {
 	if (SYNTH.script) {
 		SYNTH.master.connect(SYNTH.analyser);
 		SYNTH.analyser.connect(SYNTH.script);
+		SYNTH.script.connect(SYNTH.context.destination); // only needed by Safari, useless otherwise
 	}
 
 }).trigger('change');
@@ -827,11 +914,11 @@ function connectKeyboard(startNote) {
 	});
 
 	keyboard.keyDown(function (note, frequency) {
-		SYNTH.createOscillator('keyboard', note, frequency);
+		SYNTH.addSound('keyboard-' + note, frequency, 0.5);
 	});
 
 	keyboard.keyUp(function (note, frequency) {
-		SYNTH.removeOscillator('keyboard', note);
+		SYNTH.removeSound('keyboard-' + note);
 	});
 
 	return keyboard;
@@ -861,8 +948,6 @@ $(window).on('keydown', function (event) {
 // # POINTER                                    #
 // ##############################################
 
-var points = new Map();
-
 /*
 function logPointer(e) {
 	console.log(e);
@@ -888,6 +973,8 @@ function logPointer(e) {
 }
 */
 
+var points = new Map();
+
 $('#surface')
 	.on('pointerenter pointerover', function (e) {
 		if (e.originalEvent) {
@@ -898,14 +985,12 @@ $('#surface')
 		if (e.originalEvent) {
 			e = e.originalEvent;
 		}
-
 		var minValue = 27.5,
 			maxValue = SYNTH.context.sampleRate / 2,
 			range = 1.0 - (e.pageY * 1.0 / paper.height),
 			numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2,
-			multiplier = Math.pow(2, numberOfOctaves * (range - 1.0));
-		SYNTH.filter.frequency.value = maxValue * multiplier;
-		$('#filter-frequency').val(maxValue * multiplier).trigger('change');
+			multiplier = Math.pow(2, numberOfOctaves * (range - 1.0)),
+			filterFrequency = maxValue * multiplier;
 
 		var minValue = 27.5,
 			maxValue = 4186.01,
@@ -914,7 +999,7 @@ $('#surface')
 			multiplier = Math.pow(2, numberOfOctaves * (range - 1.0)),
 			frequency = maxValue * multiplier;
 
-		SYNTH.createOscillator('pointer', e.pointerId, frequency);
+		SYNTH.addSound('pointer-' + e.pointerId, frequency, e.pressure, filterFrequency);
 
 		if (!points.has(e.pointerId)) {
 			var colors = [
@@ -936,28 +1021,28 @@ $('#surface')
 		if (e.originalEvent) {
 			e = e.originalEvent;
 		}
+		if (SOUNDSMAP.has('pointer-' + e.pointerId)) {
+			var minValue = 27.5,
+				maxValue = SYNTH.context.sampleRate / 2,
+				range = 1.0 - (e.pageY * 1.0 / paper.height),
+				numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2,
+				multiplier = Math.pow(2, numberOfOctaves * (range - 1.0)),
+				filterFrequency = maxValue * multiplier;
 
-		var minValue = 27.5,
-			maxValue = SYNTH.context.sampleRate / 2,
-			range = 1.0 - (e.pageY * 1.0 / paper.height),
-			numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2,
-			multiplier = Math.pow(2, numberOfOctaves * (range - 1.0));
-		SYNTH.filter.frequency.value = maxValue * multiplier;
-		$('#filter-frequency').val(maxValue * multiplier).trigger('change');
+			var minValue = 27.5,
+				maxValue = 4186.01,
+				range = e.pageX * 1.0 / paper.width,
+				numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2,
+				multiplier = Math.pow(2, numberOfOctaves * (range - 1.0)),
+				frequency = maxValue * multiplier;
 
-		var minValue = 27.5,
-			maxValue = 4186.01,
-			range = e.pageX * 1.0 / paper.width,
-			numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2,
-			multiplier = Math.pow(2, numberOfOctaves * (range - 1.0)),
-			frequency = maxValue * multiplier;
+			SYNTH.updateSound('pointer-' + e.pointerId, frequency, null, filterFrequency);
 
-		SYNTH.updateOscillator('pointer', e.pointerId, frequency);
-
-		if (points.has(e.pointerId)) {
-			var point = points.get(e.pointerId);
-			point.x = e.pageX;
-			point.y = e.pageY;
+			if (points.has(e.pointerId)) {
+				var point = points.get(e.pointerId);
+				point.x = e.pageX;
+				point.y = e.pageY;
+			}
 		}
 	})
 	.on('pointerup pointercancel pointerout pointerleave', function (e) {
@@ -965,7 +1050,7 @@ $('#surface')
 			e = e.originalEvent;
 		}
 
-		SYNTH.removeOscillator('pointer', e.pointerId);
+		SYNTH.removeSound('pointer-' + e.pointerId);
 
 		if (points.has(e.pointerId)) {
 			points.delete(e.pointerId);
@@ -1091,33 +1176,13 @@ localforage.getItem('presets', function (error, value) {
 // # FIXS & UTILITIES                           #
 // ##############################################
 
+// DISABLE iOS BOUNCE
 $(document).on('touchmove', function (e) {
 	e.preventDefault();
 });
 
 
 /*
-
-// KEYBOARD ##########
-
-var frequencyByKey = {
-	65: 261.626, // C4
-	87: 277.183, // C#4
-	83: 293.665, // D4
-	69: 311.127, // D#4
-	68: 329.628, // E4
-	70: 349.228, // F4
-	84: 369.994, // F#4
-	71: 391.995, // G4
-	89: 415.305, // G#4
-	72: 440.000, // A4
-	85: 466.164, // A#4
-	74: 493.883, // B4
-	75: 523.251, // C5
-	79: 554.365, // C#5
-	76: 587.330, // D5
-	80: 622.254 // D#5
-};
 
 // MICROPHONE ##########
 
