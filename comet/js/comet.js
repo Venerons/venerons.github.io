@@ -16,10 +16,8 @@ CONTROLS
 
 SYNTH
 
-* Poliphonic Oscillator
-* 1 Sub-Oscillator
-* 4 Waveforms (Sine, Sawtooth, Square, Triangle)
-* Oscillator Detune
+* True Poliphonic Oscillator
+* 2 Oscillators with 4 Waveforms each (Sine, Sawtooth, Square, Triangle)
 * 1 Biquad Filter
 * 4 Effects (Noise Convolver, Pinking Filter, Moog Filter, BitCrusher)
 
@@ -35,30 +33,6 @@ ANIMATION
 // # CONTROLS                                   #
 // ##############################################
 /*
-
-MOUSE
-
-mousedown	-> start osc
-mousemove	-> change pitch/filter frequency
-mouseup		-> stop osc
-wheel		-> pitch bend
-right click	-> ???
-
-pressure	-> velocity
-
----
-
-TOUCH
-
-touchstart	-> start osc
-touchmove	-> change pitch/filter frequency
-touchend	-> stop osc
-
-pressure	-> velocity
-width		-> graphic effect
-height		-> graphic effect
-tiltX		-> graphic effect / pitch bend
-tiltY		-> graphic effect / pitch bend
 
 ---
 
@@ -125,6 +99,73 @@ setTimeout(function () {
 }, 1000);
 
 // ##############################################
+// # SIDEBAR                                    #
+// ##############################################
+
+$('#button-preset').on('click', function () {
+	if ($('#module-preset').is(':visible')) {
+		$('#module-preset').hide();
+	} else {
+		$('.module').hide();
+		$('#module-preset').show();
+	}
+});
+
+$('#button-osc').on('click', function () {
+	if ($('#module-osc').is(':visible')) {
+		$('#module-osc').hide();
+	} else {
+		$('.module').hide();
+		$('#module-osc').show();
+	}
+});
+
+$('#button-filter').on('click', function () {
+	if ($('#module-filter').is(':visible')) {
+		$('#module-filter').hide();
+	} else {
+		$('.module').hide();
+		$('#module-filter').show();
+	}
+});
+
+$('#button-effect').on('click', function () {
+	if ($('#module-effect').is(':visible')) {
+		$('#module-effect').hide();
+	} else {
+		$('.module').hide();
+		$('#module-effect').show();
+	}
+});
+
+$('#button-graphics').on('click', function () {
+	if ($('#module-graphics').is(':visible')) {
+		$('#module-graphics').hide();
+	} else {
+		$('.module').hide();
+		$('#module-graphics').show();
+	}
+});
+
+$('#button-settings').on('click', function () {
+	if ($('#module-settings').is(':visible')) {
+		$('#module-settings').hide();
+	} else {
+		$('.module').hide();
+		$('#module-settings').show();
+	}
+});
+
+$('#button-info').on('click', function () {
+	if ($('#module-info').is(':visible')) {
+		$('#module-info').hide();
+	} else {
+		$('.module').hide();
+		$('#module-info').show();
+	}
+});
+
+// ##############################################
 // # SYNTH                                      #
 // ##############################################
 
@@ -172,8 +213,8 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 	var filter = SYNTH.context.createBiquadFilter();
 	filter.type = $('#filter-type').val(); // todo settings
 	filterFrequency = filterFrequency || parseFloat($('#filter-frequency').val());
+	filter.detune.value = parseFloat($('#filter-detune').val()); // todo settings
 	filter.frequency.value = Math.min(filterFrequency, SYNTH.context.sampleRate / 2); // todo settings
-	filter.detune.value = 0; // todo settings
 	filter.Q.value = parseFloat($('#filter-quality').val()); // todo settings
 	filter.gain.value = parseFloat($('#filter-gain').val()); // todo settings
 
@@ -236,17 +277,118 @@ SYNTH.removeSound = function (id) {
 };
 
 // ##############################################
-// # MENU                                       #
+// # PRESET CONTROLS                            #
 // ##############################################
 
-$('#lfo-detune, #delay-time, #delay-feedback').knob();
+var presets = [
+	{"id":1414262050014,"name":"Default","osc1":{"type":"sine","detune":"0"},"osc2":{"type":"none","detune":"0"},"lfo":{"type":"sine","detune":"0"},"filter":{"type":"lowpass","frequency":"22050 Hz","quality":"0","gain":"0"},"effect":{"type":"none"},"graphics":{"type":"circularspectrum"},"settings":{"buffer":"2048"}},
+	{"id":1414260332840,"name":"Classic Electric Bass","osc1":{"type":"sine","detune":"0"},"osc2":{"type":"sine","detune":"1200"},"lfo":{"type":"sine","detune":"0"},"filter":{"type":"lowpass","frequency":"22050 Hz","quality":"0","gain":"0"},"effect":{"type":"pinkingfilter"},"graphics":{"type":"circularspectrum"},"settings":{"buffer":"2048"}}
+];
 
-$('#menu-button').on('click', function () {
-	$('#menu').show();
+$('#preset-id').on('change', function () {
+	var presetID = parseInt($(this).val(), 10),
+		preset;
+	for (var i = 0; i < presets.length; ++i) {
+		if (presetID === presets[i].id) {
+			preset = presets[i];
+		}
+	}
+	if (preset) {
+		$('#osc1-type').val(preset.osc1.type).trigger('change');
+		$('#osc1-detune').val(preset.osc1.detune).trigger('change');
+		$('#osc2-type').val(preset.osc2.type).trigger('change');
+		$('#osc2-detune').val(preset.osc2.detune).trigger('change');
+		$('#lfo-type').val(preset.lfo.type).trigger('change');
+		$('#lfo-detune').val(preset.lfo.detune).trigger('change');
+		$('#filter-type').val(preset.filter.type).trigger('change');
+		$('#filter-frequency').val(preset.filter.frequency).trigger('change');
+		$('#filter-quality').val(preset.filter.quality).trigger('change');
+		$('#filter-gain').val(preset.filter.gain).trigger('change');
+		$('#effect-type').val(preset.effect.type).trigger('change');
+		$('#graphics-type').val(preset.graphics.type).trigger('change');
+		$('#settings-buffer').val(preset.settings.buffer);
+	}
+}).on('update', function () {
+	$(this).empty();
+	for (var i = 0; i < presets.length; ++i) {
+		$(this).append('<option value="' + presets[i].id + '">' + presets[i].name + '</option>');
+	}
 });
 
-$('#surface, #menu-close').on('click', function () {
-	$('#menu').hide();
+$('#preset-save').on('click', function () {
+	var name = prompt('Preset name');
+	if (name) {
+		var preset = {
+			id: Date.now(),
+			name: name,
+			osc1: {
+				type: $('#osc1-type').val(),
+				detune: $('#osc1-detune').val()
+			},
+			osc2: {
+				type: $('#osc2-type').val(),
+				detune: $('#osc2-detune').val()
+			},
+			lfo: {
+				type: $('#lfo-type').val(),
+				detune: $('#lfo-detune').val()
+			},
+			filter:  {
+				type: $('#filter-type').val(),
+				frequency: $('#filter-frequency').val(),
+				quality: $('#filter-quality').val(),
+				gain: $('#filter-gain').val()
+			},
+			effect: {
+				type: $('#effect-type').val()
+			},
+			graphics: {
+				type: $('#graphics-type').val()
+			},
+			settings: {
+				buffer: $('#settings-buffer').val()
+			}
+		};
+
+		presets.push(preset);
+		localforage.setItem('presets', presets, function (error, value) {
+			if (error) {
+				console.error(error);
+			} else {
+				console.log('Presets saved.');
+				$('#preset-id').trigger('update');
+			}
+		});
+	}
+});
+
+$('#preset-export').on('click', function () {
+	var presetID = parseInt($('#preset-id').val(), 10);
+	for (var i = 0; i < presets.length; ++i) {
+		if (presetID === presets[i].id) {
+			alert(JSON.stringify(presets[i]));
+		}
+	}
+});
+
+localforage.getItem('presets', function (error, value) {
+	if (error) {
+		console.error(error);
+	}
+	if (value) {
+		window.presets = value;
+		$('#preset-id').trigger('update');
+	}
+	if (!error && !value) {
+		localforage.setItem('presets', window.presets, function (error, value) {
+			if (error) {
+				console.error(error);
+			} else {
+				$('#preset-id').trigger('update');
+				console.log('Presets saved.');
+			}
+		});
+	}
 });
 
 // ##############################################
@@ -329,8 +471,8 @@ $('#osc1-detune').val(0).knob({
 	min: -1200,
 	max: 1200,
 	step: 1,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#FF9900',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -346,8 +488,8 @@ $('#osc1-mix').val(1).knob({
 	min: 0,
 	max: 1,
 	step: 0.1,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#FF9900',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -363,8 +505,8 @@ $('#osc2-detune').val(0).knob({
 	min: -1200,
 	max: 1200,
 	step: 1,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#FF9900',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -382,8 +524,8 @@ $('#osc2-mix').val(1).knob({
 	min: 0,
 	max: 1,
 	step: 0.1,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#FF9900',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -407,12 +549,29 @@ $('#filter-type').on('change', function () {
 	});
 }).trigger('change');
 
+$('#filter-detune').val(0).knob({
+	min: -1200,
+	max: 1200,
+	step: 1,
+	width: 75,
+	height: 75,
+	fgColor: '#3DC186',
+	angleOffset: 180,
+	thickness: 0.2,
+	font: 'Audiowide',
+	change: function (value) {
+		SOUNDSMAP.forEach(function (sound, id) {
+			sound.filter.detune.value = value;
+		});
+	}
+}).trigger('change');
+
 $('#filter-frequency').val(SYNTH.context.sampleRate / 2).knob({
 	min: 40,
 	max: SYNTH.context.sampleRate / 2,
 	step: 1,
-	width: 100,
-	height: 100,
+	width: 75,
+	height: 75,
 	fgColor: '#3DC186',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -448,8 +607,8 @@ $('#filter-gain').val(0).knob({
 	min: -40,
 	max: 40,
 	step: 1,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#3DC186',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -632,8 +791,8 @@ $('#moogfilter-cutoff').val(0.065).knob({
 	min: 0,
 	max: 1,
 	step: 0.01,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#37BBBA',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -647,8 +806,8 @@ $('#moogfilter-resonance').val(3.99).knob({
 	min: 0,
 	max: 4,
 	step: 0.01,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#37BBBA',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -662,8 +821,8 @@ $('#bitcrusher-bits').val(4).knob({
 	min: 1,
 	max: 16,
 	step: 1,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#37BBBA',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -677,8 +836,8 @@ $('#bitcrusher-normfreq').val(0.1).knob({
 	min: 0,
 	max: 1,
 	step: 0.1,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#37BBBA',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -693,8 +852,8 @@ $('#delay-time').val(0).knob({
 	min: 0,
 	max: 1,
 	step: 0.01,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#37BBBA',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -706,8 +865,8 @@ $('#delay-feedback').val(0).knob({
 	min: 0,
 	max: 1,
 	step: 0.01,
-	width: 50,
-	height: 50,
+	width: 75,
+	height: 75,
 	fgColor: '#37BBBA',
 	angleOffset: 180,
 	thickness: 0.2,
@@ -862,17 +1021,6 @@ $('#graphics-type').on('change', function () {
 		// # BLACKBOARD                                 #
 		// ##############################################
 		var draw = function () {
-			/*
-			paper.context.globalAlpha = 0.5;
-			paper.rect({
-				x: 0,
-				y: 0,
-				width: paper.width,
-				height: paper.height,
-				fill: '#333'
-			});
-			paper.context.globalAlpha = 1;
-			*/
 			paper.clear();
 			points.forEach(function (point, key) {
 				paper.circle({
@@ -899,6 +1047,12 @@ $('#graphics-type').on('change', function () {
 // ##############################################
 // # KEYBOARD                                   #
 // ##############################################
+/*
+
+Z	-> Octave Down
+X	-> Octave Up
+
+*/
 
 function connectKeyboard(startNote) {
 	var keyboard = qwertyHancock({
@@ -947,30 +1101,52 @@ $(window).on('keydown', function (event) {
 // ##############################################
 // # POINTER                                    #
 // ##############################################
-
 /*
-function logPointer(e) {
-	console.log(e);
-	if (e.originalEvent) {
-		e = e.originalEvent;
-	}
-	console.log(
-		'TYPE: ' + e.type +
-		' | pointerType: ' + e.pointerType +
-		' | pointerId: ' + e.pointerId +
-		' | isPrimary: ' + e.isPrimary +
-		' | width: ' + e.width +
-		' | height: ' + e.height +
-		' | pressure: ' + e.pressure +
-		' | tiltX: ' + e.tiltX +
-		' | tiltY: ' + e.tiltY +
-		' | button: ' + e.button +
-		' | buttons: ' + e.buttons +
-		' | clientX: ' + e.clientX +
-		' | clientY: ' + e.clientY +
-		' | pageX: ' + e.pageX +
-		' | pageY: ' + e.pageY);
-}
+
+POINTER
+
+pointerenter	-> ???
+pointerover		-> ???
+pointerdown		-> add sound
+pointermove		-> update sound
+pointerup		-> remove sound
+pointercancel	-> remove sound
+pointerout		-> remove sound
+pointerleave	-> remove sound
+
+pointerType		-> ???
+pointerId		-> sound ID
+isPrimary		-> ???
+width			-> graphic effect
+height			-> graphic effect
+pressure		-> velocity
+tiltX			-> graphic effect / pitch bend
+tiltY			-> graphic effect / pitch bend
+button			-> ???
+buttons			-> ???
+clientX			-> ???
+clientY			-> ???
+pageX			-> OSC frequency
+pageY			-> Filter frequency
+
+---
+
+MOUSE
+
+mousedown		-> add sound
+mousemove		-> update sound
+mouseup			-> remove sound
+wheel			-> pitch bend
+right click		-> ???
+
+---
+
+TOUCH
+
+touchstart		-> add sound
+touchmove		-> update sound
+touchend		-> remove sound
+
 */
 
 var points = new Map();
@@ -1002,6 +1178,7 @@ $('#surface')
 		SYNTH.addSound('pointer-' + e.pointerId, frequency, e.pressure, filterFrequency);
 
 		if (!points.has(e.pointerId)) {
+			/*
 			var colors = [
 				'#288edf', 'darkred', 'crimson', 'salmon', 'coral',
 				'darkorange', 'orange', 'gold', 'palegoldenrod', 'darkolivegreen',
@@ -1009,6 +1186,8 @@ $('#surface')
 				'mediumturquoise', 'deepskyblue', 'dodgerblue', 'mediumpurple', 'blueviolet',
 				'mediumvioletred'
 			];
+			*/
+			var colors = ['#D34D2E', '#FF9900', '#3DC186', '#37BBBA', '#F23A65', '#E6E6E6', '#999999'];
 			points.set(e.pointerId, {
 				id: e.pointerId,
 				x: e.pageX,
@@ -1058,121 +1237,6 @@ $('#surface')
 	});
 
 // ##############################################
-// # PRESET CONTROLS                            #
-// ##############################################
-
-var presets = [
-	{"id":1414262050014,"name":"Default","osc1":{"type":"sine","detune":"0"},"osc2":{"type":"none","detune":"0"},"lfo":{"type":"sine","detune":"0"},"filter":{"type":"lowpass","frequency":"22050 Hz","quality":"0","gain":"0"},"effect":{"type":"none"},"graphics":{"type":"circularspectrum"},"settings":{"buffer":"2048"}},
-	{"id":1414260332840,"name":"Classic Electric Bass","osc1":{"type":"sine","detune":"0"},"osc2":{"type":"sine","detune":"1200"},"lfo":{"type":"sine","detune":"0"},"filter":{"type":"lowpass","frequency":"22050 Hz","quality":"0","gain":"0"},"effect":{"type":"pinkingfilter"},"graphics":{"type":"circularspectrum"},"settings":{"buffer":"2048"}}
-];
-
-$('#preset-id').on('change', function () {
-	var presetID = parseInt($(this).val(), 10),
-		preset;
-	for (var i = 0; i < presets.length; ++i) {
-		if (presetID === presets[i].id) {
-			preset = presets[i];
-		}
-	}
-	if (preset) {
-		$('#osc1-type').val(preset.osc1.type).trigger('change');
-		$('#osc1-detune').val(preset.osc1.detune).trigger('change');
-		$('#osc2-type').val(preset.osc2.type).trigger('change');
-		$('#osc2-detune').val(preset.osc2.detune).trigger('change');
-		$('#lfo-type').val(preset.lfo.type).trigger('change');
-		$('#lfo-detune').val(preset.lfo.detune).trigger('change');
-		$('#filter-type').val(preset.filter.type).trigger('change');
-		$('#filter-frequency').val(preset.filter.frequency).trigger('change');
-		$('#filter-quality').val(preset.filter.quality).trigger('change');
-		$('#filter-gain').val(preset.filter.gain).trigger('change');
-		$('#effect-type').val(preset.effect.type).trigger('change');
-		$('#graphics-type').val(preset.graphics.type).trigger('change');
-		$('#settings-buffer').val(preset.settings.buffer);
-	}
-}).on('update', function () {
-	$(this).empty();
-	for (var i = 0; i < presets.length; ++i) {
-		$(this).append('<option value="' + presets[i].id + '">' + presets[i].name + '</option>');
-	}
-});
-
-$('#preset-save').on('click', function () {
-	var name = prompt('Preset name');
-	if (name) {
-		var preset = {
-			id: Date.now(),
-			name: name,
-			osc1: {
-				type: $('#osc1-type').val(),
-				detune: $('#osc1-detune').val()
-			},
-			osc2: {
-				type: $('#osc2-type').val(),
-				detune: $('#osc2-detune').val()
-			},
-			lfo: {
-				type: $('#lfo-type').val(),
-				detune: $('#lfo-detune').val()
-			},
-			filter:  {
-				type: $('#filter-type').val(),
-				frequency: $('#filter-frequency').val(),
-				quality: $('#filter-quality').val(),
-				gain: $('#filter-gain').val()
-			},
-			effect: {
-				type: $('#effect-type').val()
-			},
-			graphics: {
-				type: $('#graphics-type').val()
-			},
-			settings: {
-				buffer: $('#settings-buffer').val()
-			}
-		};
-
-		presets.push(preset);
-		localforage.setItem('presets', presets, function (error, value) {
-			if (error) {
-				console.error(error);
-			} else {
-				console.log('Presets saved.');
-				$('#preset-id').trigger('update');
-			}
-		});
-	}
-});
-
-$('#preset-export').on('click', function () {
-	var presetID = parseInt($('#preset-id').val(), 10);
-	for (var i = 0; i < presets.length; ++i) {
-		if (presetID === presets[i].id) {
-			alert(JSON.stringify(presets[i]));
-		}
-	}
-});
-
-localforage.getItem('presets', function (error, value) {
-	if (error) {
-		console.error(error);
-	}
-	if (value) {
-		window.presets = value;
-		$('#preset-id').trigger('update');
-	}
-	if (!error && !value) {
-		localforage.setItem('presets', window.presets, function (error, value) {
-			if (error) {
-				console.error(error);
-			} else {
-				$('#preset-id').trigger('update');
-				console.log('Presets saved.');
-			}
-		});
-	}
-});
-
-// ##############################################
 // # FIXS & UTILITIES                           #
 // ##############################################
 
@@ -1183,6 +1247,23 @@ $(document).on('touchmove', function (e) {
 
 
 /*
+
+
+DYNAMICS COMPRESSOR
+
+var compressor = SYNTH.context.createDynamicsCompressor();
+compressor.threshold.value = -24; // min: -100 - max: 0  - step: 0.1
+compressor.knee.value = 30; // min: 0 - max: 40  - step: 0.1
+compressor.ratio.value = 12; // min: 1 - max: 20  - step: 1
+compressor.attack.value = 0.003; // min: 0 - max: 1  - step: 0.001
+compressor.release.value = 0.250; // min: 0 - max: 1  - step: 0.001
+
+
+
+
+
+
+
 
 // MICROPHONE ##########
 
