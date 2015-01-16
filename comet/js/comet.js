@@ -1,4 +1,4 @@
-// Copyright (c) 2014 Daniele Veneroni.
+// Copyright (c) 2014-2015 Daniele Veneroni.
 // Released under GPLv3 License. See LICENSE.md for further information.
 'use strict';
 
@@ -12,14 +12,14 @@ CONTROLS
 * Multitouch
 * Mouse click-and-drag
 * Computer Keyboard
-* Preset save and load
+* Presets save and load
 
 SYNTH
 
-* True Poliphonic Oscillator
-* 2 Oscillators with 4 Waveforms each (Sine, Sawtooth, Square, Triangle)
-* 1 Biquad Filter
-* 4 Effects (Noise Convolver, Pinking Filter, Moog Filter, BitCrusher)
+* True Poliphonic Synth
+* 2 Oscillators with 4 Waveforms each (Sine, Sawtooth, Square, Triangle), detune and mix
+* 1 Biquad Filter with Detune, Frequency, Quality, Gain
+* 5 Effects (Noise Convolver, Pinking Filter, Moog Filter, BitCrusher, Delay)
 
 ANIMATION
 
@@ -30,46 +30,14 @@ ANIMATION
 
 */
 // ##############################################
-// # CONTROLS                                   #
-// ##############################################
-/*
-
----
-
-KEYBOARD
-
-keydown		-> start osc
-keyup		-> stop osc
-Z			-> octave down
-X			-> octave up
-
-???			-> velocity
-
----
-
-MIDI
-
-???
-
----
-
-PROPOSALS
-
-Proximity API			-> change pitch theremin-like
-Device Orientation API	-> change pitch/filter frequency
-
-*/
-// ##############################################
 // # TODO                                       #
 // ##############################################
 /*
 
 * More Presets (e ricordati di aggiungere i settings degli effetti nei presets!)
 * Oscillators Range (2, 4, 8, 16, 32, 64)
-* Oscillators Volume (Mix)
 * Noise Generators
 * New Oscillator: Supersaw
-* Velocity (apply volume to oscillators - use pointer pressure)
 * LFO
 * Filter Envelope (Attack, Decay, Sustain, Release)
 * Volume Envelope (Attack, Decay, Sustain, Release)
@@ -80,13 +48,11 @@ Device Orientation API	-> change pitch/filter frequency
 * Effect: Delay
 * Pointer visual effects (using width, height, tiltx, tilty, pressure)
 * Fullscreen API
-* Typed Arrays
-* Ambient Light API
 * Page Visibility API
 * Screen Orientation API
 * Speech Syntesis API - Web Speech API
 * Proximity API
-* Glide
+* graphics: none
 
 */
 // ##############################################
@@ -169,6 +135,8 @@ $('#button-info').on('click', function () {
 // # SYNTH                                      #
 // ##############################################
 
+// ( [ OSC1 / OSC2 ] > [ MIX1 / MIX2 ] > [ VELOCITY GAIN ] > [ BIQUAD FILTER ] ) > [ MASTER GAIN ] > [ DESTINATION ]
+
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var SYNTH = {};
 SYNTH.context = new AudioContext();
@@ -176,31 +144,53 @@ SYNTH.master = SYNTH.context.createGain();
 SYNTH.master.gain.value = 0.5;
 SYNTH.master.connect(SYNTH.context.destination);
 
+SYNTH.settings = {
+	osc1: {
+		type: 'sine',
+		detune: 0,
+		mix: 1
+	},
+	osc2: {
+		type: 'none',
+		detune: 0,
+		mix: 1
+	},
+	filter: {
+		type: 'lowpass',
+		detune: 0,
+		frequency: SYNTH.context.sampleRate / 2,
+		quality: 0,
+		gain: 0
+	}
+};
+
 var SOUNDSMAP = new Map();
 
 SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
+	var settings = SYNTH.settings;
 
 	// OSCILLATOR 1
 
 	var osc1 = SYNTH.context.createOscillator();
-	osc1.type = $('#osc1-type').val(); // todo settings
+	osc1.type = settings.osc1.type;
 	osc1.frequency.value = frequency;
-	osc1.detune.value = parseFloat($('#osc1-detune').val()); // todo settings
+	osc1.detune.value = settings.osc1.detune;
 	osc1.start(0);
 	var mix1 = SYNTH.context.createGain();
-	mix1.gain.value = parseFloat($('#osc1-mix').val()); // todo settings
+	mix1.gain.value = settings.osc1.mix;
 
 	// OSCILLATOR 2
 
-	if ($('#osc2-type').val() !== 'none') {
-		var osc2 = SYNTH.context.createOscillator();
-		osc2.type = $('#osc2-type').val(); // todo settings
+	var osc2, mix2;
+	if (settings.osc2.type !== 'none') {
+		osc2 = SYNTH.context.createOscillator();
+		osc2.type = settings.osc2.type;
 		osc2.frequency.value = frequency;
-		osc2.detune.value = parseFloat($('#osc2-detune').val()); // todo settings
+		osc2.detune.value = settings.osc2.detune;
 		osc2.start(0);
 
-		var mix2 = SYNTH.context.createGain();
-		mix2.gain.value = parseFloat($('#osc2-mix').val()); // todo settings
+		mix2 = SYNTH.context.createGain();
+		mix2.gain.value = settings.osc2.mix;
 	}
 
 	// VELOCITY GAIN
@@ -211,19 +201,18 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 	// BIQUAD FILTER
 
 	var filter = SYNTH.context.createBiquadFilter();
-	filter.type = $('#filter-type').val(); // todo settings
-	filterFrequency = filterFrequency || parseFloat($('#filter-frequency').val());
-	filter.detune.value = parseFloat($('#filter-detune').val()); // todo settings
-	filter.frequency.value = Math.min(filterFrequency, SYNTH.context.sampleRate / 2); // todo settings
-	filter.Q.value = parseFloat($('#filter-quality').val()); // todo settings
-	filter.gain.value = parseFloat($('#filter-gain').val()); // todo settings
+	filter.type = settings.filter.type;
+	filter.detune.value = settings.filter.detune;
+	filter.frequency.value = Math.min(filterFrequency || settings.filter.frequency, SYNTH.context.sampleRate / 2);
+	filter.Q.value = settings.filter.quality;
+	filter.gain.value = settings.filter.gain;
 
 	// CONNECTIONS
 
 	osc1.connect(mix1);
 	mix1.connect(velocityGain);
 
-	if ($('#osc2-type').val() !== 'none') {
+	if (settings.osc2.type !== 'none') {
 		osc2.connect(mix2);
 		mix2.connect(velocityGain);
 	}
@@ -237,7 +226,7 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 	SOUNDSMAP.set(id, {
 		id: id,
 		osc1: { osc: osc1, mix: mix1 },
-		osc2: $('#osc2-type').val() !== 'none' ? { osc: osc2, mix: mix2 } : null,
+		osc2: settings.osc2.type !== 'none' ? { osc: osc2, mix: mix2 } : null,
 		velocity: velocityGain,
 		filter: filter
 	});
@@ -281,8 +270,30 @@ SYNTH.removeSound = function (id) {
 // ##############################################
 
 var presets = [
-	{"id":1414262050014,"name":"Default","osc1":{"type":"sine","detune":"0"},"osc2":{"type":"none","detune":"0"},"lfo":{"type":"sine","detune":"0"},"filter":{"type":"lowpass","frequency":"22050 Hz","quality":"0","gain":"0"},"effect":{"type":"none"},"graphics":{"type":"circularspectrum"},"settings":{"buffer":"2048"}},
-	{"id":1414260332840,"name":"Classic Electric Bass","osc1":{"type":"sine","detune":"0"},"osc2":{"type":"sine","detune":"1200"},"lfo":{"type":"sine","detune":"0"},"filter":{"type":"lowpass","frequency":"22050 Hz","quality":"0","gain":"0"},"effect":{"type":"pinkingfilter"},"graphics":{"type":"circularspectrum"},"settings":{"buffer":"2048"}}
+	{
+		"id": 1,
+		"name": "Default",
+		"osc1": { "type": "sine", "detune": 0, "mix": 1 },
+		"osc2": { "type": "none", "detune": 0, "mix": 1 },
+		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
+		"graphics": { "type": "circularspectrum" }
+	},
+	{
+		"id": 2,
+		"name": "Classic Electric Bass",
+		"osc1": { "type": "sine", "detune": 0, "mix": 1 },
+		"osc2": { "type": "sine", "detune": 1200, "mix": 1 },
+		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
+		"graphics": { "type": "circularspectrum" }
+	},
+	{
+		"id": 3,
+		"name": "Buzzer",
+		"osc1": { "type": "sawtooth", "detune": 0, "mix": 1 },
+		"osc2": { "type": "sawtooth", "detune": -1200, "mix": 0.5 },
+		"filter": { "type": "lowpass", "detune": 0, "frequency": 3000, "quality": 26, "gain": 0 },
+		"graphics": { "type": "circularspectrum" }
+	}
 ];
 
 $('#preset-id').on('change', function () {
@@ -291,28 +302,43 @@ $('#preset-id').on('change', function () {
 	for (var i = 0; i < presets.length; ++i) {
 		if (presetID === presets[i].id) {
 			preset = presets[i];
+
+			SYNTH.settings.osc1.type = preset.osc1.type;
+			$('#osc1-type').val(preset.osc1.type).trigger('change');
+			SYNTH.settings.osc1.detune = preset.osc1.detune;
+			$('#osc1-detune').val(preset.osc1.detune).trigger('change');
+			SYNTH.settings.osc1.mix = preset.osc1.mix;
+			$('#osc1-mix').val(preset.osc1.mix).trigger('change');
+
+			SYNTH.settings.osc2.type = preset.osc2.type;
+			$('#osc2-type').val(preset.osc2.type).trigger('change');
+			SYNTH.settings.osc2.detune = preset.osc2.detune;
+			$('#osc2-detune').val(preset.osc2.detune).trigger('change');
+			SYNTH.settings.osc2.mix = preset.osc2.mix;
+			$('#osc2-mix').val(preset.osc2.mix).trigger('change');
+
+			SYNTH.settings.filter.type = preset.filter.type;
+			$('#filter-type').val(preset.filter.type).trigger('change');
+			SYNTH.settings.filter.detune = preset.filter.detune;
+			$('#filter-detune').val(preset.filter.detune).trigger('change');
+			SYNTH.settings.filter.frequency = preset.filter.frequency;
+			$('#filter-frequency').val(preset.filter.frequency).trigger('change');
+			SYNTH.settings.filter.quality = preset.filter.quality;
+			$('#filter-quality').val(preset.filter.quality).trigger('change');
+			SYNTH.settings.filter.gain = preset.filter.gain;
+			$('#filter-gain').val(preset.filter.gain).trigger('change');
+
+			$('#graphics-type').val(preset.graphics.type).trigger('change');
+
+			break;
 		}
 	}
-	if (preset) {
-		$('#osc1-type').val(preset.osc1.type).trigger('change');
-		$('#osc1-detune').val(preset.osc1.detune).trigger('change');
-		$('#osc2-type').val(preset.osc2.type).trigger('change');
-		$('#osc2-detune').val(preset.osc2.detune).trigger('change');
-		$('#lfo-type').val(preset.lfo.type).trigger('change');
-		$('#lfo-detune').val(preset.lfo.detune).trigger('change');
-		$('#filter-type').val(preset.filter.type).trigger('change');
-		$('#filter-frequency').val(preset.filter.frequency).trigger('change');
-		$('#filter-quality').val(preset.filter.quality).trigger('change');
-		$('#filter-gain').val(preset.filter.gain).trigger('change');
-		$('#effect-type').val(preset.effect.type).trigger('change');
-		$('#graphics-type').val(preset.graphics.type).trigger('change');
-		$('#settings-buffer').val(preset.settings.buffer);
-	}
 }).on('update', function () {
-	$(this).empty();
-	for (var i = 0; i < presets.length; ++i) {
-		$(this).append('<option value="' + presets[i].id + '">' + presets[i].name + '</option>');
-	}
+	var select = $(this);
+	select.empty();
+	presets.forEach(function (preset) {
+		select.append('<option value="' + preset.id + '">' + preset.name + '</option>');
+	});
 });
 
 $('#preset-save').on('click', function () {
@@ -323,30 +349,23 @@ $('#preset-save').on('click', function () {
 			name: name,
 			osc1: {
 				type: $('#osc1-type').val(),
-				detune: $('#osc1-detune').val()
+				detune: parseFloat($('#osc1-detune').val()),
+				mix: parseFloat($('#osc1-mix').val())
 			},
 			osc2: {
 				type: $('#osc2-type').val(),
-				detune: $('#osc2-detune').val()
-			},
-			lfo: {
-				type: $('#lfo-type').val(),
-				detune: $('#lfo-detune').val()
+				detune: parseFloat($('#osc2-detune').val()),
+				mix: parseFloat($('#osc2-mix').val())
 			},
 			filter:  {
 				type: $('#filter-type').val(),
-				frequency: $('#filter-frequency').val(),
-				quality: $('#filter-quality').val(),
-				gain: $('#filter-gain').val()
-			},
-			effect: {
-				type: $('#effect-type').val()
+				detune: parseFloat($('#filter-detune').val()),
+				frequency: parseFloat($('#filter-frequency').val()),
+				quality: parseFloat($('#filter-quality').val()),
+				gain: parseFloat($('#filter-gain').val())
 			},
 			graphics: {
 				type: $('#graphics-type').val()
-			},
-			settings: {
-				buffer: $('#settings-buffer').val()
 			}
 		};
 
@@ -364,11 +383,11 @@ $('#preset-save').on('click', function () {
 
 $('#preset-export').on('click', function () {
 	var presetID = parseInt($('#preset-id').val(), 10);
-	for (var i = 0; i < presets.length; ++i) {
-		if (presetID === presets[i].id) {
-			alert(JSON.stringify(presets[i]));
+	presets.forEach(function (preset) {
+		if (presetID === preset.id) {
+			alert(JSON.stringify(preset));
 		}
-	}
+	});
 });
 
 localforage.getItem('presets', function (error, value) {
@@ -467,7 +486,14 @@ var brownNoise = (function() {
 
 */
 
-$('#osc1-detune').val(0).knob({
+$('#osc1-type').on('change', function () {
+	SYNTH.settings.osc1.type = $(this).val();
+	SOUNDSMAP.forEach(function (sound, id) {
+		SYNTH.removeSound(sound.id);
+	});
+}).val(SYNTH.settings.osc1.type).trigger('change');
+
+$('#osc1-detune').val(SYNTH.settings.osc1.detune).knob({
 	min: -1200,
 	max: 1200,
 	step: 1,
@@ -478,13 +504,14 @@ $('#osc1-detune').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
+		SYNTH.settings.osc1.detune = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.osc1.osc.detune.value = value;
 		});
 	}
 }).trigger('change');
 
-$('#osc1-mix').val(1).knob({
+$('#osc1-mix').val(SYNTH.settings.osc1.mix).knob({
 	min: 0,
 	max: 1,
 	step: 0.1,
@@ -495,13 +522,21 @@ $('#osc1-mix').val(1).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
+		SYNTH.settings.osc1.mix = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.osc1.mix.gain.value = value;
 		});
 	}
 }).trigger('change');
 
-$('#osc2-detune').val(0).knob({
+$('#osc2-type').on('change', function () {
+	SYNTH.settings.osc2.type = $(this).val();
+	SOUNDSMAP.forEach(function (sound, id) {
+		SYNTH.removeSound(sound.id);
+	});
+}).val(SYNTH.settings.osc2.type).trigger('change');
+
+$('#osc2-detune').val(SYNTH.settings.osc2.detune).knob({
 	min: -1200,
 	max: 1200,
 	step: 1,
@@ -512,6 +547,7 @@ $('#osc2-detune').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
+		SYNTH.settings.osc2.detune = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			if (sound.osc2 !== null) {
 				sound.osc2.osc.detune.value = value;
@@ -520,7 +556,7 @@ $('#osc2-detune').val(0).knob({
 	}
 }).trigger('change');
 
-$('#osc2-mix').val(1).knob({
+$('#osc2-mix').val(SYNTH.settings.osc2.mix).knob({
 	min: 0,
 	max: 1,
 	step: 0.1,
@@ -531,6 +567,7 @@ $('#osc2-mix').val(1).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
+		SYNTH.settings.osc2.mix = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			if (sound.osc2 !== null) {
 				sound.osc2.mix.gain.value = value;
@@ -544,12 +581,13 @@ $('#osc2-mix').val(1).knob({
 // ##############################################
 
 $('#filter-type').on('change', function () {
+	SYNTH.settings.filter.type = $(this).val();
 	SOUNDSMAP.forEach(function (sound, id) {
 		sound.filter.type = $(this).val();
 	});
-}).trigger('change');
+}).val(SYNTH.settings.filter.type).trigger('change');
 
-$('#filter-detune').val(0).knob({
+$('#filter-detune').val(SYNTH.settings.filter.detune).knob({
 	min: -1200,
 	max: 1200,
 	step: 1,
@@ -560,13 +598,14 @@ $('#filter-detune').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
+		SYNTH.settings.filter.detune = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.filter.detune.value = value;
 		});
 	}
 }).trigger('change');
 
-$('#filter-frequency').val(SYNTH.context.sampleRate / 2).knob({
+$('#filter-frequency').val(SYNTH.settings.filter.frequency).knob({
 	min: 40,
 	max: SYNTH.context.sampleRate / 2,
 	step: 1,
@@ -577,16 +616,17 @@ $('#filter-frequency').val(SYNTH.context.sampleRate / 2).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
+		SYNTH.settings.filter.frequency = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.filter.frequency.value = value;
 		});
 	},
 	format: function (value) {
-		return value + ' Hz'
+		return value + ' Hz';
 	}
 }).trigger('change');
 
-$('#filter-quality').val(0).knob({
+$('#filter-quality').val(SYNTH.settings.filter.quality).knob({
 	min: 0, // 0.0001
 	max: 30, // 1000
 	step: 0.03, // 0.0001
@@ -597,13 +637,14 @@ $('#filter-quality').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
+		SYNTH.settings.filter.quality = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.filter.Q.value = value;
 		});
 	}
 }).trigger('change');
 
-$('#filter-gain').val(0).knob({
+$('#filter-gain').val(SYNTH.settings.filter.gain).knob({
 	min: -40,
 	max: 40,
 	step: 1,
@@ -614,6 +655,7 @@ $('#filter-gain').val(0).knob({
 	thickness: 0.2,
 	font: 'Audiowide',
 	change: function (value) {
+		SYNTH.settings.filter.gain = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.filter.gain.value = value;
 		});

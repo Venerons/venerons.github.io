@@ -28,14 +28,9 @@ button {
 		border: none;
 	}
 
-	&:focus,
-	&:hover {
+	&:hover, &:focus, &:active {
 		outline: 0;
-		background: rgba(255, 255, 255, 0.3);
-	}
-
-	&:active {
-		background: rgba(0, 0, 0, 0.3);
+		color: #333 !important;
 	}
 }
 
@@ -120,10 +115,6 @@ a {
 		width: 44px;
 		height: 44;
 		margin: 0.5rem;
-
-		&:hover, &:focus, &:active {
-			color: #333 !important;
-		}
 	}
 }
 
@@ -220,6 +211,11 @@ a {
 	}
 	select, button {
 		border: 1px solid #D34D2E;
+	}
+	button {
+		&:hover, &:focus, &:active {
+			background: #D34D2E;
+		}
 	}
 }
 
