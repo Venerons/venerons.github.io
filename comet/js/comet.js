@@ -167,6 +167,7 @@ SYNTH.settings = {
 var SOUNDSMAP = new Map();
 
 SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
+	console.log('addSound', id, frequency, velocity, filterFrequency);
 	var settings = SYNTH.settings;
 
 	// OSCILLATOR 1
@@ -233,6 +234,7 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 };
 
 SYNTH.updateSound = function (id, frequency, velocity, filterFrequency) {
+	console.log('updateSound', id, frequency, velocity, filterFrequency);
 	if (SOUNDSMAP.has(id)) {
 		var sound = SOUNDSMAP.get(id);
 		sound.osc1.osc.frequency.value = frequency;
@@ -249,6 +251,7 @@ SYNTH.updateSound = function (id, frequency, velocity, filterFrequency) {
 };
 
 SYNTH.removeSound = function (id) {
+	console.log('removeSound', id);
 	if (SOUNDSMAP.has(id)) {
 		var sound = SOUNDSMAP.get(id);
 		sound.osc1.osc.stop(0);
@@ -1200,6 +1203,7 @@ $('#surface')
 		}
 	})
 	.on('pointerdown', function (e) {
+		console.log('pointerdown', e);
 		if (e.originalEvent) {
 			e = e.originalEvent;
 		}
@@ -1239,6 +1243,7 @@ $('#surface')
 		}
 	})
 	.on('pointermove', function (e) {
+		console.log('pointermove', e);
 		if (e.originalEvent) {
 			e = e.originalEvent;
 		}
@@ -1267,6 +1272,7 @@ $('#surface')
 		}
 	})
 	.on('pointerup pointercancel pointerout pointerleave', function (e) {
+		console.log('pointerup pointercancel pointerout pointerleave', e);
 		if (e.originalEvent) {
 			e = e.originalEvent;
 		}
