@@ -224,6 +224,13 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 	if (SOUNDSMAP.has(id)) {
 		SYNTH.removeSound(id);
 	}
+	console.log({
+		id: id,
+		osc1: { osc: osc1, mix: mix1 },
+		osc2: settings.osc2.type !== 'none' ? { osc: osc2, mix: mix2 } : null,
+		velocity: velocityGain,
+		filter: filter
+	})
 	SOUNDSMAP.set(id, {
 		id: id,
 		osc1: { osc: osc1, mix: mix1 },
@@ -1222,7 +1229,6 @@ $('#surface')
 			frequency = maxValue * multiplier;
 
 		SYNTH.addSound('pointer-' + e.pointerId, frequency, e.pressure, filterFrequency);
-		SOUNDSMAP.get('pointer-' + e.pointerId).osc1.osc.play(0);
 
 		if (!points.has(e.pointerId)) {
 			/*
