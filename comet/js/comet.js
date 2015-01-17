@@ -1222,6 +1222,7 @@ $('#surface')
 			frequency = maxValue * multiplier;
 
 		SYNTH.addSound('pointer-' + e.pointerId, frequency, e.pressure, filterFrequency);
+		SOUNDSMAP.get('pointer-' + e.pointerId).osc1.osc.play(0);
 
 		if (!points.has(e.pointerId)) {
 			/*
