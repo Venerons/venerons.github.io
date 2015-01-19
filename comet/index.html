@@ -61,8 +61,8 @@
 			<button id="button-osc">O</button>
 			<button id="button-filter">F</button>
 			<button id="button-effect">E</button>
-			<button id="button-graphics">G</button>
-			<button id="button-settings">S</button>
+			<button id="button-compressor">C</button>
+			<button id="button-animation">A</button>
 			<button id="button-info">?</button>
 		</div>
 
@@ -160,11 +160,11 @@
 			<h1>EFFECT</h1>
 			<select id="effect-type" title="Effect Type">
 				<option value="none">none</option>
+				<option value="hallreverb">Hall Reverb</option>
 				<option value="noiseconvolver">Noise Convolver</option>
 				<option value="pinkingfilter">Pinking Filter</option>
 				<option value="moogfilter">Moog Filter</option>
 				<option value="bitcrusher">BitCrusher</option>
-				<option value="delay">Delay</option>
 			</select>
 
 			<div id="moogfilter-settings" class="knob-set" style="display: none">
@@ -189,6 +189,7 @@
 				</div>
 			</div>
 
+			<!--
 			<div id="delay-settings" class="knob-set" style="display: none">
 				<div class="knob-block">
 					<input id="delay-time" type="text" data-skin="tron">
@@ -199,40 +200,86 @@
 					<label for="delay-feedback">Feedback</label>
 				</div>
 			</div>
+			-->
+
+			<label for="effect-buffer">Buffer Size</label>
+			<select id="effect-buffer">
+				<option value="256">256</option>
+				<option value="512" selected>512</option>
+				<option value="1024">1024</option>
+				<option value="2048">2048</option>
+				<option value="4096">4096</option>
+				<option value="8192">8192</option>
+				<option value="16384">16384</option>
+			</select>
 		</div>
 
-		<!-- GRAPHICS -->
-		<div id="module-graphics" class="module" style="display: none">
-			<h1>GRAPHICS</h1>
-			<select id="graphics-type" title="Graphic Type">
+		<!-- DYNAMICS COMPRESSOR -->
+		<div id="module-compressor" class="module" style="display: none">
+			<h1>DYNAMICS COMPRESSOR</h1>
+			<div class="knob-set">
+				<div class="knob-block">
+					<input id="compressor-threshold" type="text" data-skin="tron">
+					<label for="compressor-threshold">Threshold</label>
+				</div>
+				<div class="knob-block">
+					<input id="compressor-knee" type="text" data-skin="tron">
+					<label for="compressor-knee">Knee</label>
+				</div>
+				<div class="knob-block">
+					<input id="compressor-ratio" type="text" data-skin="tron">
+					<label for="compressor-ratio">Ratio</label>
+				</div>
+			</div>
+			<div class="knob-set">
+				<div class="knob-block">
+					<input id="compressor-reduction" type="text" data-skin="tron">
+					<label for="compressor-reduction">Reduction</label>
+				</div>
+				<div class="knob-block">
+					<input id="compressor-attack" type="text" data-skin="tron">
+					<label for="compressor-attack">Attack</label>
+				</div>
+				<div class="knob-block">
+					<input id="compressor-release" type="text" data-skin="tron">
+					<label for="compressor-release">Release</label>
+				</div>
+			</div>
+		</div>
+
+		<!-- ANIMATION -->
+		<div id="module-animation" class="module" style="display: none">
+			<h1>ANIMATION</h1>
+			<select id="animation-type" title="Graphic Type">
 				<option value="none">none</option>
 				<option value="classicspectrum">Classic Spectrum</option>
-				<option value="circularspectrum" selected>Circular Spectrum</option>
+				<option value="circularspectrum">Circular Spectrum</option>
 				<option value="insetcircularspectrum">Inset Circular Spectrum</option>
 				<option value="blackboard">Blackboard</option>
 				<!--<option value="oscilloscope">Oscilloscope</option>-->
 				<!--<option value="bugs">Running Bugs</option>-->
 				<!--<option value="drops">Fading Drops</option>-->
 			</select>
-		</div>
-
-		<!-- SETTINGS -->
-		<div id="module-settings" class="module" style="display: none">
-			<h1>SETTINGS</h1>
-			<label for="settings-buffer">Buffer Size</label>
-			<select id="settings-buffer">
+			<label for="animation-analyser-fft">Analyser FFT Size</label>
+			<select id="animation-analyser-fft">
+				<option value="32">32</option>
 				<option value="64">64</option>
 				<option value="128">128</option>
-				<option value="258">258</option>
+				<option value="256">256</option>
 				<option value="512">512</option>
 				<option value="1024">1024</option>
-				<option value="2048" selected>2048</option>
-				<option value="4096">4096</option>
+				<option value="2048">2048</option>
 			</select>
-			<h1>INPUTS</h1>
-			<button id="inputs-mic" title="Microphone"><i class="fa fa-microphone fa-lg"></i></button>
-			<button id="inputs-file" title="Audio File"><i class="fa fa-file-audio-o fa-lg"></i></button>
-			<button id="inputs-midi" title="MIDI"><i class="fa fa-plug fa-lg"></i></button>
+			<label for="animation-script-buffer">Animation Processor Buffer Size</label>
+			<select id="animation-script-buffer">
+				<option value="256">256</option>
+				<option value="512">512</option>
+				<option value="1024">1024</option>
+				<option value="2048">2048</option>
+				<option value="4096">4096</option>
+				<option value="8192">8192</option>
+				<option value="16384">16384</option>
+			</select>
 		</div>
 
 		<!-- INFO -->

@@ -138,6 +138,10 @@ a {
 			margin-top: 1rem;
 		}
 	}
+	label {
+		display: block;
+		font-size: 0.7rem;
+	}
 }
 
 .knob-set {
@@ -282,7 +286,29 @@ a {
 	}
 }
 
-#button-graphics {
+#button-compressor {
+	color: #B158B6;
+	border: 1px solid #B158B6;
+
+	&:hover, &:focus, &:active {
+		background: #B158B6;
+	}
+}
+
+#module-compressor {
+	width: 400px;
+	color: #B158B6;
+	border: 1px solid #B158B6;
+
+	h1 {
+		color: #B158B6;
+	}
+	select, button {
+		border: 1px solid #B158B6;
+	}
+}
+
+#button-animation {
 	color: #F23A65;
 	border: 1px solid #F23A65;
 
@@ -291,7 +317,8 @@ a {
 	}
 }
 
-#module-graphics {
+#module-animation {
+	width: 400px;
 	color: #F23A65;
 	border: 1px solid #F23A65;
 
@@ -300,27 +327,6 @@ a {
 	}
 	select, button {
 		border: 1px solid #F23A65;
-	}
-}
-
-#button-settings {
-	color: #E6E6E6;
-	border: 1px solid #E6E6E6;
-
-	&:hover, &:focus, &:active {
-		background: #E6E6E6;
-	}
-}
-
-#module-settings {
-	color: #E6E6E6;
-	border: 1px solid #E6E6E6;
-
-	h1 {
-		color: #E6E6E6;
-	}
-	select, button {
-		border: 1px solid #E6E6E6;
 	}
 }
 

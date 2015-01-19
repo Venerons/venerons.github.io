@@ -34,6 +34,7 @@ ANIMATION
 // ##############################################
 /*
 
+* Import Preset
 * More Presets (e ricordati di aggiungere i settings degli effetti nei presets!)
 * Oscillators Range (2, 4, 8, 16, 32, 64)
 * Noise Generators
@@ -52,7 +53,6 @@ ANIMATION
 * Screen Orientation API
 * Speech Syntesis API - Web Speech API
 * Proximity API
-* graphics: none
 
 */
 // ##############################################
@@ -104,12 +104,21 @@ $('#button-effect').on('click', function () {
 	}
 });
 
-$('#button-graphics').on('click', function () {
-	if ($('#module-graphics').is(':visible')) {
-		$('#module-graphics').hide();
+$('#button-compressor').on('click', function () {
+	if ($('#module-compressor').is(':visible')) {
+		$('#module-compressor').hide();
 	} else {
 		$('.module').hide();
-		$('#module-graphics').show();
+		$('#module-compressor').show();
+	}
+});
+
+$('#button-animation').on('click', function () {
+	if ($('#module-animation').is(':visible')) {
+		$('#module-animation').hide();
+	} else {
+		$('.module').hide();
+		$('#module-animation').show();
 	}
 });
 
@@ -135,18 +144,16 @@ $('#button-info').on('click', function () {
 // # SYNTH                                      #
 // ##############################################
 
-// ( [ OSC1 / OSC2 ] > [ MIX1 / MIX2 ] > [ VELOCITY GAIN ] > [ BIQUAD FILTER ] ) > [ MASTER GAIN ] > [ DESTINATION ]
+// ( [ OSC1 / OSC2 ] > [ MIX1 / MIX2 ] > [ VELOCITY GAIN ] > [ BIQUAD FILTER ] ) > [ SOUND MIX GAIN ] > [ EFFECT ] > [ MASTER GAIN ] > [ DESTINATION ]
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
 var SYNTH = {};
 SYNTH.context = new AudioContext();
-SYNTH.master = SYNTH.context.createGain();
-SYNTH.master.gain.value = 0.5;
-SYNTH.master.connect(SYNTH.context.destination);
 
 SYNTH.settings = {
 	osc1: {
-		type: 'sine',
+		type: 'sawtooth',
 		detune: 0,
 		mix: 1
 	},
@@ -161,13 +168,44 @@ SYNTH.settings = {
 		frequency: SYNTH.context.sampleRate / 2,
 		quality: 0,
 		gain: 0
+	},
+	compressor: {
+		threshold: -24,
+		knee: 30,
+		ratio: 12,
+		reduction: 0,
+		attack: 0.003,
+		release: 0.25
+	},
+	animation: {
+		type: 'circularspectrum',
+		analyserFFT: 512,
+		scriptBuffer: 512
 	}
 };
+
+SYNTH.soundMix = SYNTH.context.createGain();
+SYNTH.soundMix.gain.value = 1;
+
+SYNTH.master = SYNTH.context.createGain();
+SYNTH.master.gain.value = 0.5;
+
+SYNTH.compressor = SYNTH.context.createDynamicsCompressor();
+SYNTH.compressor.threshold.value = SYNTH.settings.compressor.threshold;
+SYNTH.compressor.knee.value = SYNTH.settings.compressor.knee;
+SYNTH.compressor.ratio.value = SYNTH.settings.compressor.ratio;
+SYNTH.compressor.reduction.value = SYNTH.settings.compressor.reduction;
+SYNTH.compressor.attack.value = SYNTH.settings.compressor.attack;
+SYNTH.compressor.release.value = SYNTH.settings.compressor.release;
+
+SYNTH.soundMix.connect(SYNTH.master);
+SYNTH.master.connect(SYNTH.compressor);
+SYNTH.compressor.connect(SYNTH.context.destination);
 
 var SOUNDSMAP = new Map();
 
 SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
-	console.log('addSound', id, frequency, velocity, filterFrequency);
+	//console.log('addSound', id, frequency, velocity, filterFrequency);
 	var settings = SYNTH.settings;
 
 	// OSCILLATOR 1
@@ -219,18 +257,11 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 	}
 
 	velocityGain.connect(filter);
-	filter.connect(SYNTH.master);
+	filter.connect(SYNTH.soundMix);
 
 	if (SOUNDSMAP.has(id)) {
 		SYNTH.removeSound(id);
 	}
-	console.log({
-		id: id,
-		osc1: { osc: osc1, mix: mix1 },
-		osc2: settings.osc2.type !== 'none' ? { osc: osc2, mix: mix2 } : null,
-		velocity: velocityGain,
-		filter: filter
-	})
 	SOUNDSMAP.set(id, {
 		id: id,
 		osc1: { osc: osc1, mix: mix1 },
@@ -241,7 +272,7 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 };
 
 SYNTH.updateSound = function (id, frequency, velocity, filterFrequency) {
-	console.log('updateSound', id, frequency, velocity, filterFrequency);
+	//console.log('updateSound', id, frequency, velocity, filterFrequency);
 	if (SOUNDSMAP.has(id)) {
 		var sound = SOUNDSMAP.get(id);
 		sound.osc1.osc.frequency.value = frequency;
@@ -258,7 +289,7 @@ SYNTH.updateSound = function (id, frequency, velocity, filterFrequency) {
 };
 
 SYNTH.removeSound = function (id) {
-	console.log('removeSound', id);
+	//console.log('removeSound', id);
 	if (SOUNDSMAP.has(id)) {
 		var sound = SOUNDSMAP.get(id);
 		sound.osc1.osc.stop(0);
@@ -274,151 +305,6 @@ SYNTH.removeSound = function (id) {
 		SOUNDSMAP.delete(id);
 	}
 };
-
-// ##############################################
-// # PRESET CONTROLS                            #
-// ##############################################
-
-var presets = [
-	{
-		"id": 1,
-		"name": "Default",
-		"osc1": { "type": "sine", "detune": 0, "mix": 1 },
-		"osc2": { "type": "none", "detune": 0, "mix": 1 },
-		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
-		"graphics": { "type": "circularspectrum" }
-	},
-	{
-		"id": 2,
-		"name": "Classic Electric Bass",
-		"osc1": { "type": "sine", "detune": 0, "mix": 1 },
-		"osc2": { "type": "sine", "detune": 1200, "mix": 1 },
-		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
-		"graphics": { "type": "circularspectrum" }
-	},
-	{
-		"id": 3,
-		"name": "Buzzer",
-		"osc1": { "type": "sawtooth", "detune": 0, "mix": 1 },
-		"osc2": { "type": "sawtooth", "detune": -1200, "mix": 0.5 },
-		"filter": { "type": "lowpass", "detune": 0, "frequency": 3000, "quality": 26, "gain": 0 },
-		"graphics": { "type": "circularspectrum" }
-	}
-];
-
-$('#preset-id').on('change', function () {
-	var presetID = parseInt($(this).val(), 10),
-		preset;
-	for (var i = 0; i < presets.length; ++i) {
-		if (presetID === presets[i].id) {
-			preset = presets[i];
-
-			SYNTH.settings.osc1.type = preset.osc1.type;
-			$('#osc1-type').val(preset.osc1.type).trigger('change');
-			SYNTH.settings.osc1.detune = preset.osc1.detune;
-			$('#osc1-detune').val(preset.osc1.detune).trigger('change');
-			SYNTH.settings.osc1.mix = preset.osc1.mix;
-			$('#osc1-mix').val(preset.osc1.mix).trigger('change');
-
-			SYNTH.settings.osc2.type = preset.osc2.type;
-			$('#osc2-type').val(preset.osc2.type).trigger('change');
-			SYNTH.settings.osc2.detune = preset.osc2.detune;
-			$('#osc2-detune').val(preset.osc2.detune).trigger('change');
-			SYNTH.settings.osc2.mix = preset.osc2.mix;
-			$('#osc2-mix').val(preset.osc2.mix).trigger('change');
-
-			SYNTH.settings.filter.type = preset.filter.type;
-			$('#filter-type').val(preset.filter.type).trigger('change');
-			SYNTH.settings.filter.detune = preset.filter.detune;
-			$('#filter-detune').val(preset.filter.detune).trigger('change');
-			SYNTH.settings.filter.frequency = preset.filter.frequency;
-			$('#filter-frequency').val(preset.filter.frequency).trigger('change');
-			SYNTH.settings.filter.quality = preset.filter.quality;
-			$('#filter-quality').val(preset.filter.quality).trigger('change');
-			SYNTH.settings.filter.gain = preset.filter.gain;
-			$('#filter-gain').val(preset.filter.gain).trigger('change');
-
-			$('#graphics-type').val(preset.graphics.type).trigger('change');
-
-			break;
-		}
-	}
-}).on('update', function () {
-	var select = $(this);
-	select.empty();
-	presets.forEach(function (preset) {
-		select.append('<option value="' + preset.id + '">' + preset.name + '</option>');
-	});
-});
-
-$('#preset-save').on('click', function () {
-	var name = prompt('Preset name');
-	if (name) {
-		var preset = {
-			id: Date.now(),
-			name: name,
-			osc1: {
-				type: $('#osc1-type').val(),
-				detune: parseFloat($('#osc1-detune').val()),
-				mix: parseFloat($('#osc1-mix').val())
-			},
-			osc2: {
-				type: $('#osc2-type').val(),
-				detune: parseFloat($('#osc2-detune').val()),
-				mix: parseFloat($('#osc2-mix').val())
-			},
-			filter:  {
-				type: $('#filter-type').val(),
-				detune: parseFloat($('#filter-detune').val()),
-				frequency: parseFloat($('#filter-frequency').val()),
-				quality: parseFloat($('#filter-quality').val()),
-				gain: parseFloat($('#filter-gain').val())
-			},
-			graphics: {
-				type: $('#graphics-type').val()
-			}
-		};
-
-		presets.push(preset);
-		localforage.setItem('presets', presets, function (error, value) {
-			if (error) {
-				console.error(error);
-			} else {
-				console.log('Presets saved.');
-				$('#preset-id').trigger('update');
-			}
-		});
-	}
-});
-
-$('#preset-export').on('click', function () {
-	var presetID = parseInt($('#preset-id').val(), 10);
-	presets.forEach(function (preset) {
-		if (presetID === preset.id) {
-			alert(JSON.stringify(preset));
-		}
-	});
-});
-
-localforage.getItem('presets', function (error, value) {
-	if (error) {
-		console.error(error);
-	}
-	if (value) {
-		window.presets = value;
-		$('#preset-id').trigger('update');
-	}
-	if (!error && !value) {
-		localforage.setItem('presets', window.presets, function (error, value) {
-			if (error) {
-				console.error(error);
-			} else {
-				$('#preset-id').trigger('update');
-				console.log('Presets saved.');
-			}
-		});
-	}
-});
 
 // ##############################################
 // # OSCILLATORS CONTROLS                       #
@@ -496,6 +382,15 @@ var brownNoise = (function() {
 
 */
 
+$('#osc1-detune, #osc1-mix, #osc2-detune, #osc2-mix').knob({
+	width: 75,
+	height: 75,
+	fgColor: '#FF9900',
+	angleOffset: 180,
+	thickness: 0.2,
+	font: 'Audiowide'
+});
+
 $('#osc1-type').on('change', function () {
 	SYNTH.settings.osc1.type = $(this).val();
 	SOUNDSMAP.forEach(function (sound, id) {
@@ -503,41 +398,29 @@ $('#osc1-type').on('change', function () {
 	});
 }).val(SYNTH.settings.osc1.type).trigger('change');
 
-$('#osc1-detune').val(SYNTH.settings.osc1.detune).knob({
+$('#osc1-detune').trigger('configure', {
 	min: -1200,
 	max: 1200,
 	step: 1,
-	width: 75,
-	height: 75,
-	fgColor: '#FF9900',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.settings.osc1.detune = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.osc1.osc.detune.value = value;
 		});
 	}
-}).trigger('change');
+}).val(SYNTH.settings.osc1.detune).trigger('change');
 
-$('#osc1-mix').val(SYNTH.settings.osc1.mix).knob({
+$('#osc1-mix').trigger('configure', {
 	min: 0,
 	max: 1,
 	step: 0.1,
-	width: 75,
-	height: 75,
-	fgColor: '#FF9900',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.settings.osc1.mix = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.osc1.mix.gain.value = value;
 		});
 	}
-}).trigger('change');
+}).val(SYNTH.settings.osc1.mix).trigger('change');
 
 $('#osc2-type').on('change', function () {
 	SYNTH.settings.osc2.type = $(this).val();
@@ -546,16 +429,10 @@ $('#osc2-type').on('change', function () {
 	});
 }).val(SYNTH.settings.osc2.type).trigger('change');
 
-$('#osc2-detune').val(SYNTH.settings.osc2.detune).knob({
+$('#osc2-detune').trigger('configure', {
 	min: -1200,
 	max: 1200,
 	step: 1,
-	width: 75,
-	height: 75,
-	fgColor: '#FF9900',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.settings.osc2.detune = value;
 		SOUNDSMAP.forEach(function (sound, id) {
@@ -564,18 +441,12 @@ $('#osc2-detune').val(SYNTH.settings.osc2.detune).knob({
 			}
 		});
 	}
-}).trigger('change');
+}).val(SYNTH.settings.osc2.detune).trigger('change');
 
-$('#osc2-mix').val(SYNTH.settings.osc2.mix).knob({
+$('#osc2-mix').trigger('configure', {
 	min: 0,
 	max: 1,
 	step: 0.1,
-	width: 75,
-	height: 75,
-	fgColor: '#FF9900',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.settings.osc2.mix = value;
 		SOUNDSMAP.forEach(function (sound, id) {
@@ -584,11 +455,20 @@ $('#osc2-mix').val(SYNTH.settings.osc2.mix).knob({
 			}
 		});
 	}
-}).trigger('change');
+}).val(SYNTH.settings.osc2.mix).trigger('change');
 
 // ##############################################
 // # BIQUAD FILTER CONTROLS                     #
 // ##############################################
+
+$('#filter-detune, #filter-frequency, #filter-quality, #filter-gain').knob({
+	width: 75,
+	height: 75,
+	fgColor: '#3DC186',
+	angleOffset: 180,
+	thickness: 0.2,
+	font: 'Audiowide',
+});
 
 $('#filter-type').on('change', function () {
 	SYNTH.settings.filter.type = $(this).val();
@@ -597,34 +477,22 @@ $('#filter-type').on('change', function () {
 	});
 }).val(SYNTH.settings.filter.type).trigger('change');
 
-$('#filter-detune').val(SYNTH.settings.filter.detune).knob({
+$('#filter-detune').trigger('configure', {
 	min: -1200,
 	max: 1200,
 	step: 1,
-	width: 75,
-	height: 75,
-	fgColor: '#3DC186',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.settings.filter.detune = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.filter.detune.value = value;
 		});
 	}
-}).trigger('change');
+}).val(SYNTH.settings.filter.detune).trigger('change');
 
-$('#filter-frequency').val(SYNTH.settings.filter.frequency).knob({
+$('#filter-frequency').trigger('configure', {
 	min: 40,
 	max: SYNTH.context.sampleRate / 2,
 	step: 1,
-	width: 75,
-	height: 75,
-	fgColor: '#3DC186',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.settings.filter.frequency = value;
 		SOUNDSMAP.forEach(function (sound, id) {
@@ -634,43 +502,31 @@ $('#filter-frequency').val(SYNTH.settings.filter.frequency).knob({
 	format: function (value) {
 		return value + ' Hz';
 	}
-}).trigger('change');
+}).val(SYNTH.settings.filter.frequency).trigger('change');
 
-$('#filter-quality').val(SYNTH.settings.filter.quality).knob({
+$('#filter-quality').trigger('configure', {
 	min: 0, // 0.0001
 	max: 30, // 1000
 	step: 0.03, // 0.0001
-	width: 75,
-	height: 75,
-	fgColor: '#3DC186',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.settings.filter.quality = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.filter.Q.value = value;
 		});
 	}
-}).trigger('change');
+}).val(SYNTH.settings.filter.quality).trigger('change');
 
-$('#filter-gain').val(SYNTH.settings.filter.gain).knob({
+$('#filter-gain').trigger('configure', {
 	min: -40,
 	max: 40,
 	step: 1,
-	width: 75,
-	height: 75,
-	fgColor: '#3DC186',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.settings.filter.gain = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.filter.gain.value = value;
 		});
 	}
-}).trigger('change');
+}).val(SYNTH.settings.filter.gain).trigger('change');
 
 // ##############################################
 // # EFFECT CONTROLS                            #
@@ -678,7 +534,7 @@ $('#filter-gain').val(SYNTH.settings.filter.gain).knob({
 
 /* SIMPLE LOWPASS
 
-var bufferSize = parseInt($('#settings-buffer').val(), 10);
+var bufferSize = parseInt($('#effect-buffer').val(), 10);
 var effect = (function() {
 	var lastOut = 0.0;
 	var node = context.createScriptProcessor(bufferSize, 1, 1);
@@ -695,7 +551,23 @@ var effect = (function() {
 
 //*/
 
-/*
+var hallBuffer;
+var r = new XMLHttpRequest();
+r.open('GET', 'hall.ogg', true);
+r.responseType = 'arraybuffer';
+r.onload = function() {
+	var audioData = r.response;
+	SYNTH.context.decodeAudioData(audioData, function (buffer) {
+		hallBuffer = buffer;
+	}, function (e) {
+		"Error with decoding audio data" + e.err
+	});
+}
+r.send();
+
+$('#effect-buffer').on('change', function () {
+	$('#effect-type').trigger('change');
+});
 
 $('#effect-type').on('change', function () {
 	$('#delay-settings, #moogfilter-settings, #bitcrusher-settings').hide();
@@ -703,9 +575,18 @@ $('#effect-type').on('change', function () {
 		SYNTH.effect.disconnect();
 		delete SYNTH.effect;
 	}
-	SYNTH.filter.disconnect();
+	SYNTH.soundMix.disconnect();
 
-	if ($(this).val() === 'noiseconvolver') {
+	if ($(this).val() === 'hallreverb') {
+		// ##############################################
+		// # HALL REVERB                                #
+		// ##############################################
+		SYNTH.effect = (function () {
+			var convolver = SYNTH.context.createConvolver();
+			convolver.buffer = hallBuffer;
+			return convolver;
+		})();
+	} else if ($(this).val() === 'noiseconvolver') {
 		// ##############################################
 		// # NOISE CONVOLVER                            #
 		// ##############################################
@@ -725,7 +606,7 @@ $('#effect-type').on('change', function () {
 		// ##############################################
 		// # PINKING FILTER                             #
 		// ##############################################
-		var bufferSize = parseInt($('#settings-buffer').val(), 10);
+		var bufferSize = parseInt($('#effect-buffer').val(), 10);
 		SYNTH.effect = (function () {
 			var b0, b1, b2, b3, b4, b5, b6;
 			b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
@@ -751,8 +632,8 @@ $('#effect-type').on('change', function () {
 		// ##############################################
 		// # MOOG FILTER                                #
 		// ##############################################
-		$('#moogfilter-settings').fadeIn();
-		var bufferSize = parseInt($('#settings-buffer').val(), 10);
+		$('#moogfilter-settings').show();
+		var bufferSize = parseInt($('#effect-buffer').val(), 10);
 		SYNTH.effect = (function () {
 			var node = SYNTH.context.createScriptProcessor(bufferSize, 1, 1);
 			var in1, in2, in3, in4, out1, out2, out3, out4;
@@ -784,8 +665,8 @@ $('#effect-type').on('change', function () {
 		// ##############################################
 		// # BITCRUSHER                                 #
 		// ##############################################
-		$('#bitcrusher-settings').fadeIn();
-		var bufferSize = parseInt($('#settings-buffer').val(), 10);
+		$('#bitcrusher-settings').show();
+		var bufferSize = parseInt($('#effect-buffer').val(), 10);
 		SYNTH.effect = (function () {
 			var node = SYNTH.context.createScriptProcessor(bufferSize, 1, 1);
 			node.bits = 4; // between 1 and 16
@@ -807,97 +688,61 @@ $('#effect-type').on('change', function () {
 			};
 			return node;
 		})();
-	}/* else if ($(this).val() === 'delay') {
-		// ##############################################
-		// # DELAY                                      #
-		// ##############################################
-		$('#delay-settings').show();
-		SYNTH.effect = (function () {
-			var delay = SYNTH.context.createDelay(),
-				feedback = SYNTH.context.createGain();
-
-			delay.delayTime.value = 0; // between 0 and 1 (or delay.maxDelayTime) -> 1 = 1 second/1000ms
-			feedback.gain.value = 0; // beetween 0.0 and 1.0
-
-			filter.connect(nodes.delay);
-			delay.connect(nodes.feedback);
-			feedback.connect(nodes.delay);
-			feedback.connect(nodes.volume);
-
-			return node;
-		})();
 	}
-	*/
-	/*
 
 	if (SYNTH.effect) {
-		SYNTH.filter.connect(SYNTH.effect);
+		SYNTH.soundMix.connect(SYNTH.effect);
 		SYNTH.effect.connect(SYNTH.master);
 	} else {
-		SYNTH.filter.connect(SYNTH.master);
+		SYNTH.soundMix.connect(SYNTH.master);
 	}
 
 }).trigger('change');
 
-$('#moogfilter-cutoff').val(0.065).knob({
-	min: 0,
-	max: 1,
-	step: 0.01,
+$('#moogfilter-cutoff, #moogfilter-resonance, #bitcrusher-bits, #bitcrusher-normfreq').knob({
 	width: 75,
 	height: 75,
 	fgColor: '#37BBBA',
 	angleOffset: 180,
 	thickness: 0.2,
-	font: 'Audiowide',
+	font: 'Audiowide'
+});
+
+$('#moogfilter-cutoff').trigger('configure', {
+	min: 0,
+	max: 1,
+	step: 0.01,
 	change: function (value) {
 		SYNTH.effect.cutoff = value;
 	}
-}).trigger('change');
+}).val(0.065).trigger('change');
 
-$('#moogfilter-resonance').val(3.99).knob({
+$('#moogfilter-resonance').trigger('configure', {
 	min: 0,
 	max: 4,
 	step: 0.01,
-	width: 75,
-	height: 75,
-	fgColor: '#37BBBA',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.effect.resonance = value;
 	}
-}).trigger('change');
+}).val(3.99).trigger('change');
 
-$('#bitcrusher-bits').val(4).knob({
+$('#bitcrusher-bits').trigger('configure', {
 	min: 1,
 	max: 16,
 	step: 1,
-	width: 75,
-	height: 75,
-	fgColor: '#37BBBA',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.effect.bits = value;
 	}
-}).trigger('change');
+}).val(4).trigger('change');
 
-$('#bitcrusher-normfreq').val(0.1).knob({
+$('#bitcrusher-normfreq').trigger('configure', {
 	min: 0,
 	max: 1,
 	step: 0.1,
-	width: 75,
-	height: 75,
-	fgColor: '#37BBBA',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
 		SYNTH.effect.normfreq = value;
 	}
-}).trigger('change');
+}).val(0.1).trigger('change');
 
 /*
 $('#delay-time').val(0).knob({
@@ -910,25 +755,102 @@ $('#delay-time').val(0).knob({
 	angleOffset: 180,
 	thickness: 0.2,
 	font: 'Audiowide',
-	change: function (value) {}
+	change: function (value) {
+		SYNTH.effect.updateDelayTime(value);
+	}
 }).trigger('change');
 
 $('#delay-feedback').val(0).knob({
 	min: 0,
 	max: 1,
-	step: 0.01,
+	step: 0.1,
 	width: 75,
 	height: 75,
 	fgColor: '#37BBBA',
 	angleOffset: 180,
 	thickness: 0.2,
 	font: 'Audiowide',
-	change: function (value) {}
+	change: function (value) {
+		SYNTH.effect.updateFeedback(value);
+	}
 }).trigger('change');
 */
 
 // ##############################################
-// # GRAPHICS CONTROLS                          #
+// # DYNAMICS COMPRESSOR                        #
+// ##############################################
+
+$('#compressor-threshold, #compressor-knee, #compressor-ratio, #compressor-reduction, #compressor-attack, #compressor-release').knob({
+	width: 75,
+	height: 75,
+	fgColor: '#B158B6',
+	angleOffset: 180,
+	thickness: 0.2,
+	font: 'Audiowide'
+});
+
+$('#compressor-threshold').trigger('configure', {
+	min: -100, // min: -100 - max: 0  - step: 0.1
+	max: 0,
+	step: 0.1,
+	change: function (value) {
+		SYNTH.settings.compressor.threshold = value;
+		SYNTH.compressor.threshold.value = value;
+	}
+}).val(SYNTH.settings.compressor.threshold).trigger('change');
+
+$('#compressor-knee').trigger('configure', {
+	min: 0, // min: 0 - max: 40  - step: 0.1
+	max: 40,
+	step: 0.1,
+	change: function (value) {
+		SYNTH.settings.compressor.knee = value;
+		SYNTH.compressor.knee.value = value;
+	}
+}).val(SYNTH.settings.compressor.knee).trigger('change');
+
+$('#compressor-ratio').trigger('configure', {
+	min: 1, // min: 1 - max: 20 - step: 1
+	max: 20,
+	step: 1,
+	change: function (value) {
+		SYNTH.settings.compressor.ratio = value;
+		SYNTH.compressor.ratio.value = value;
+	}
+}).val(SYNTH.settings.compressor.ratio).trigger('change');
+
+$('#compressor-reduction').trigger('configure', {
+	min: -20, // min: -20 - max: 0 - step: 1
+	max: 0,
+	step: 1,
+	change: function (value) {
+		SYNTH.settings.compressor.reduction = value;
+		SYNTH.compressor.reduction.value = value;
+	}
+}).val(SYNTH.settings.compressor.reduction).trigger('change');
+
+$('#compressor-attack').trigger('configure', {
+	min: 0, // min: 0 - max: 1 - step: 0.001
+	max: 1,
+	step: 0.001,
+	change: function (value) {
+		SYNTH.settings.compressor.attack = value;
+		SYNTH.compressor.attack.value = value;
+	}
+}).val(SYNTH.settings.compressor.attack).trigger('change');
+
+$('#compressor-release').trigger('configure', {
+	min: 0, // min: 0 - max: 1 - step: 0.001
+	max: 1,
+	step: 0.001,
+	change: function (value) {
+		SYNTH.settings.compressor.release = value;
+		SYNTH.compressor.release.value = value;
+	}
+}).val(SYNTH.settings.compressor.release).trigger('change');
+
+// ##############################################
+// # ANIMATION CONTROLS                         #
 // ##############################################
 
 window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
@@ -945,13 +867,26 @@ function adaptScreen() {
 
 $(window).on('resize', adaptScreen).trigger('resize');
 
-$('#graphics-type').on('change', function () {
-	var bufferSize = parseInt($('#settings-buffer').val(), 10);
+$('#animation-analyser-fft').on('change', function () {
+	if (SYNTH.analyser) {
+		SYNTH.analyser.fftSize = parseInt($(this).val(), 10);
+	}
+	$('#animation-type').trigger('change');
+});
+
+$('#animation-script-buffer').on('change', function () {
+	$('#animation-type').trigger('change');
+});
+
+$('#animation-type').on('change', function () {
+	var bufferSize = parseInt($('#animation-script-buffer').val(), 10);
 
 	if (!SYNTH.analyser) {
 		SYNTH.analyser = SYNTH.context.createAnalyser();
-		SYNTH.analyser.smoothingTimeConstant = 0.3;
-		SYNTH.analyser.fftSize = 512; // customizable (note: show the fftSize / 2 -> i.e. 1024 -> 512)
+		SYNTH.analyser.smoothingTimeConstant = 0.5; // min: 0 - max: 1 - default: 0.8
+		SYNTH.analyser.fftSize = parseInt($('#animation-analyser-fft').val(), 10);
+		SYNTH.analyser.minDecibels = -100; // default: -100
+		SYNTH.analyser.maxDecibels = -30; // default: -30
 	} else {
 		SYNTH.analyser.disconnect();
 	}
@@ -963,7 +898,11 @@ $('#graphics-type').on('change', function () {
 		cancelAnimationFrame(SYNTH.animation);
 	}
 
-	if ($(this).val() === 'classicspectrum') {
+	if ($(this).val() === 'none') {
+		requestAnimationFrame(function () {
+			paper.clear();
+		});
+	} else if ($(this).val() === 'classicspectrum') {
 		// ##############################################
 		// # CLASSIC SPECTRUM                           #
 		// ##############################################
@@ -973,18 +912,20 @@ $('#graphics-type').on('change', function () {
 			node.onaudioprocess = function (e) {
 				var array = new Uint8Array(SYNTH.analyser.frequencyBinCount);
 				SYNTH.analyser.getByteFrequencyData(array);
-				paper.clear();
-				var gap = paper.width / (array.length * 2);
-				for (var i = 0; i < array.length; ++i){
-					var newy = paper.height - (maxSpectrumHeight * array[i] / 256);
-					paper.rect({
-						x: i * (gap * 2),
-						y: newy,
-						width: gap,
-						height: paper.height,
-						fill: 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)'
-					});
-				}
+				requestAnimationFrame(function () {
+					paper.clear();
+					var gap = paper.width / (array.length * 2);
+					for (var i = 0; i < array.length; ++i){
+						var newy = paper.height - (maxSpectrumHeight * array[i] / 256);
+						paper.rect({
+							x: i * (gap * 2),
+							y: newy,
+							width: gap,
+							height: paper.height,
+							fill: 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)'
+						});
+					}
+				});
 			};
 			return node;
 		})();
@@ -997,34 +938,35 @@ $('#graphics-type').on('change', function () {
 			node.onaudioprocess = function () {
 				var array = new Uint8Array(SYNTH.analyser.frequencyBinCount);
 				SYNTH.analyser.getByteFrequencyData(array);
+				requestAnimationFrame(function () {
+					var degIncrement = 360 / array.length,
+						centerX = window.innerWidth / 2,
+						centerY = window.innerHeight / 2,
+						circleR = 80,
+						maxLength = circleR * 3; //window.innerWidth < window.innerHeight ? window.innerWidth / 2 - circleR * 2: window.innerHeight / 2 - circleR * 2;
 
-				var degIncrement = 360 / array.length,
-					centerX = window.innerWidth / 2,
-					centerY = window.innerHeight / 2,
-					circleR = 80,
-					maxLength = circleR * 3; //window.innerWidth < window.innerHeight ? window.innerWidth / 2 - circleR * 2: window.innerHeight / 2 - circleR * 2;
+					paper.clear();
 
-				paper.clear();
-
-				for (var i = 0; i < array.length; ++i) {
-					var angle = ((i * degIncrement) * Math.PI) / 180,
-						preX = Math.cos(angle),
-						preY = Math.sin(angle),
-						x = centerX + preX * circleR,
-						y = centerY + preY * circleR,
-						barValue = (array[i] * maxLength / 512) + circleR,
-						dx = centerX + preX * barValue,
-						dy = centerY + preY * barValue;
-					paper.line({
-						x1: x,
-						y1: y,
-						x2: dx,
-						y2: dy,
-						stroke: 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)',
-						join: 'miter',
-						thickness: 1
-					});
-				}
+					for (var i = 0; i < array.length; ++i) {
+						var angle = ((i * degIncrement) * Math.PI) / 180,
+							preX = Math.cos(angle),
+							preY = Math.sin(angle),
+							x = centerX + preX * circleR,
+							y = centerY + preY * circleR,
+							barValue = (array[i] * maxLength / 512) + circleR,
+							dx = centerX + preX * barValue,
+							dy = centerY + preY * barValue;
+						paper.line({
+							x1: x,
+							y1: y,
+							x2: dx,
+							y2: dy,
+							stroke: 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)',
+							join: 'miter',
+							thickness: 1
+						});
+					}
+				});
 			};
 			return node;
 		})();
@@ -1037,34 +979,35 @@ $('#graphics-type').on('change', function () {
 			node.onaudioprocess = function () {
 				var array = new Uint8Array(SYNTH.analyser.frequencyBinCount);
 				SYNTH.analyser.getByteFrequencyData(array);
+				requestAnimationFrame(function () {
+					var degIncrement = 360 / array.length,
+						centerX = window.innerWidth / 2,
+						centerY = window.innerHeight / 2,
+						circleR = 240,
+						maxLength = circleR;
 
-				var degIncrement = 360 / array.length,
-					centerX = window.innerWidth / 2,
-					centerY = window.innerHeight / 2,
-					circleR = 240,
-					maxLength = circleR;
+					paper.clear();
 
-				paper.clear();
-
-				for (var i = 0; i < array.length; ++i) {
-					var angle = ((i * degIncrement) * Math.PI) / 180,
-						preX = Math.cos(angle),
-						preY = Math.sin(angle),
-						x = centerX + preX * circleR,
-						y = centerY + preY * circleR,
-						barValue = -(array[i] * maxLength / 512) + circleR,
-						dx = centerX + preX * barValue,
-						dy = centerY + preY * barValue;
-					paper.line({
-						x1: x,
-						y1: y,
-						x2: dx,
-						y2: dy,
-						stroke: 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)',
-						join: 'miter',
-						thickness: 1
-					});
-				}
+					for (var i = 0; i < array.length; ++i) {
+						var angle = ((i * degIncrement) * Math.PI) / 180,
+							preX = Math.cos(angle),
+							preY = Math.sin(angle),
+							x = centerX + preX * circleR,
+							y = centerY + preY * circleR,
+							barValue = -(array[i] * maxLength / 512) + circleR,
+							dx = centerX + preX * barValue,
+							dy = centerY + preY * barValue;
+						paper.line({
+							x1: x,
+							y1: y,
+							x2: dx,
+							y2: dy,
+							stroke: 'hsl(' + (i * 360 / array.length) + ', 100%, 50%)',
+							join: 'miter',
+							thickness: 1
+						});
+					}
+				});
 			};
 			return node;
 		})();
@@ -1089,7 +1032,7 @@ $('#graphics-type').on('change', function () {
 	}
 
 	if (SYNTH.script) {
-		SYNTH.master.connect(SYNTH.analyser);
+		SYNTH.compressor.connect(SYNTH.analyser);
 		SYNTH.analyser.connect(SYNTH.script);
 		SYNTH.script.connect(SYNTH.context.destination); // only needed by Safari, useless otherwise
 	}
@@ -1147,6 +1090,138 @@ $(window).on('keydown', function (event) {
 			keyboardFirstNote = 9;
 		}
 		connectKeyboard('C' + keyboardFirstNote);
+	}
+});
+
+// ##############################################
+// # PRESET CONTROLS                            #
+// ##############################################
+
+var presets = [
+	{
+		"id": 1,
+		"name": "Default",
+		"osc1": { "type": "sawtooth", "detune": 0, "mix": 1 },
+		"osc2": { "type": "none", "detune": 0, "mix": 1 },
+		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
+		"compressor": { "threshold": -24, "knee": 30, "ratio": 12, "reduction": 0, "attack": 0.003, "release": 0.25 },
+		"animation": { "type": "circularspectrum", "analyserFFT": 512, "scriptBuffer": 512 }
+	},
+	{
+		"id": 2,
+		"name": "Classic Electric Bass",
+		"osc1": { "type": "sine", "detune": 0, "mix": 1 },
+		"osc2": { "type": "sine", "detune": 1200, "mix": 1 },
+		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
+		"compressor": { "threshold": -24, "knee": 30, "ratio": 12, "reduction": 0, "attack": 0.003, "release": 0.25 },
+		"animation": { "type": "circularspectrum", "analyserFFT": 512, "scriptBuffer": 512 }
+	},
+	{
+		"id": 3,
+		"name": "Buzzer",
+		"osc1": { "type": "sawtooth", "detune": 0, "mix": 1 },
+		"osc2": { "type": "sawtooth", "detune": -1200, "mix": 0.5 },
+		"filter": { "type": "lowpass", "detune": 0, "frequency": 3000, "quality": 26, "gain": 0 },
+		"compressor": { "threshold": -24, "knee": 30, "ratio": 12, "reduction": 0, "attack": 0.003, "release": 0.25 },
+		"animation": { "type": "circularspectrum", "analyserFFT": 512, "scriptBuffer": 512 }
+	}
+];
+
+$('#preset-id').on('change', function () {
+	var presetID = parseInt($(this).val(), 10),
+		preset;
+	for (var i = 0; i < presets.length; ++i) {
+		if (presetID === presets[i].id) {
+			preset = presets[i];
+
+			SYNTH.settings = $.extend({}, preset);
+			delete SYNTH.settings.id;
+			delete SYNTH.settings.name;
+
+			$('#osc1-type').val(SYNTH.settings.osc1.type).trigger('change');
+			$('#osc1-detune').val(SYNTH.settings.osc1.detune).trigger('change');
+			$('#osc1-mix').val(SYNTH.settings.osc1.mix).trigger('change');
+
+			$('#osc2-type').val(SYNTH.settings.osc2.type).trigger('change');
+			$('#osc2-detune').val(SYNTH.settings.osc2.detune).trigger('change');
+			$('#osc2-mix').val(SYNTH.settings.osc2.mix).trigger('change');
+
+			$('#filter-type').val(SYNTH.settings.filter.type).trigger('change');
+			$('#filter-detune').val(SYNTH.settings.filter.detune).trigger('change');
+			$('#filter-frequency').val(SYNTH.settings.filter.frequency).trigger('change');
+			$('#filter-quality').val(SYNTH.settings.filter.quality).trigger('change');
+			$('#filter-gain').val(SYNTH.settings.filter.gain).trigger('change');
+
+			$('#compressor-threshold').val(SYNTH.settings.compressor.threshold).trigger('change');
+			$('#compressor-knee').val(SYNTH.settings.compressor.knee).trigger('change');
+			$('#compressor-ratio').val(SYNTH.settings.compressor.ratio).trigger('change');
+			$('#compressor-reduction').val(SYNTH.settings.compressor.reduction).trigger('change');
+			$('#compressor-attack').val(SYNTH.settings.compressor.attack).trigger('change');
+			$('#compressor-release').val(SYNTH.settings.compressor.release).trigger('change');
+
+			$('#animation-type').val(SYNTH.settings.animation.type).trigger('change');
+			$('#animation-analyser-fft').val(SYNTH.settings.animation.analyserFFT).trigger('change');
+			$('#animation-script-buffer').val(SYNTH.settings.animation.scriptBuffer).trigger('change');
+
+			console.log('preset "' + preset.name + '" loaded')
+
+			break;
+		}
+	}
+}).on('update', function () {
+	var select = $(this);
+	select.empty();
+	presets.forEach(function (preset) {
+		select.append('<option value="' + preset.id + '">' + preset.name + '</option>');
+	});
+	select.trigger('change');
+});
+
+$('#preset-save').on('click', function () {
+	var name = prompt('Preset name');
+	if (name) {
+		var preset = $.extend({
+			id: Date.now(),
+			name: name
+		}, SYNTH.settings);
+		presets.push(preset);
+		localforage.setItem('presets', presets, function (error, value) {
+			if (error) {
+				console.error(error);
+			} else {
+				console.log('Presets saved.');
+				$('#preset-id').trigger('update');
+			}
+		});
+	}
+});
+
+$('#preset-export').on('click', function () {
+	var presetID = parseInt($('#preset-id').val(), 10);
+	presets.forEach(function (preset) {
+		if (presetID === preset.id) {
+			alert(JSON.stringify(preset));
+		}
+	});
+});
+
+localforage.getItem('presets', function (error, value) {
+	if (error) {
+		console.error(error);
+	}
+	if (value) {
+		window.presets = value;
+		$('#preset-id').trigger('update');
+	}
+	if (!error && !value) {
+		localforage.setItem('presets', window.presets, function (error, value) {
+			if (error) {
+				console.error(error);
+			} else {
+				$('#preset-id').trigger('update');
+				console.log('Presets saved.');
+			}
+		});
 	}
 });
 
@@ -1210,7 +1285,6 @@ $('#surface')
 		}
 	})
 	.on('pointerdown', function (e) {
-		console.log('pointerdown', e);
 		if (e.originalEvent) {
 			e = e.originalEvent;
 		}
@@ -1250,7 +1324,6 @@ $('#surface')
 		}
 	})
 	.on('pointermove', function (e) {
-		console.log('pointermove', e);
 		if (e.originalEvent) {
 			e = e.originalEvent;
 		}
@@ -1279,7 +1352,6 @@ $('#surface')
 		}
 	})
 	.on('pointerup pointercancel pointerout pointerleave', function (e) {
-		console.log('pointerup pointercancel pointerout pointerleave', e);
 		if (e.originalEvent) {
 			e = e.originalEvent;
 		}
@@ -1302,23 +1374,6 @@ $(document).on('touchmove', function (e) {
 
 
 /*
-
-
-DYNAMICS COMPRESSOR
-
-var compressor = SYNTH.context.createDynamicsCompressor();
-compressor.threshold.value = -24; // min: -100 - max: 0  - step: 0.1
-compressor.knee.value = 30; // min: 0 - max: 40  - step: 0.1
-compressor.ratio.value = 12; // min: 1 - max: 20  - step: 1
-compressor.attack.value = 0.003; // min: 0 - max: 1  - step: 0.001
-compressor.release.value = 0.250; // min: 0 - max: 1  - step: 0.001
-
-
-
-
-
-
-
 
 // MICROPHONE ##########
 
