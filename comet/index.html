@@ -57,13 +57,15 @@
 		<div id="keyboard" hidden></div>
 
 		<div class="sidebar sidebar-right">
-			<button id="button-preset">P</button>
-			<button id="button-osc">O</button>
-			<button id="button-filter">F</button>
-			<button id="button-effect">E</button>
-			<button id="button-compressor">C</button>
-			<button id="button-animation">A</button>
-			<button id="button-info">?</button>
+			<button id="button-preset" data-module="preset">P</button>
+			<button id="button-osc" data-module="osc">O</button>
+			<button id="button-filter" data-module="filter">F</button>
+			<button id="button-effect" data-module="effect">E</button>
+			<button id="button-delay" data-module="delay">D</button>
+			<button id="button-convolver" data-module="convolver">C</button>
+			<button id="button-compressor" data-module="compressor">C</button>
+			<button id="button-animation" data-module="animation">A</button>
+			<button id="button-info" data-module="info">?</button>
 		</div>
 
 		<!-- PRESET -->
@@ -160,8 +162,6 @@
 			<h1>EFFECT</h1>
 			<select id="effect-type" title="Effect Type">
 				<option value="none">none</option>
-				<option value="hallreverb">Hall Reverb</option>
-				<option value="noiseconvolver">Noise Convolver</option>
 				<option value="pinkingfilter">Pinking Filter</option>
 				<option value="moogfilter">Moog Filter</option>
 				<option value="bitcrusher">BitCrusher</option>
@@ -189,19 +189,6 @@
 				</div>
 			</div>
 
-			<!--
-			<div id="delay-settings" class="knob-set" style="display: none">
-				<div class="knob-block">
-					<input id="delay-time" type="text" data-skin="tron">
-					<label for="delay-time">Time</label>
-				</div>
-				<div class="knob-block">
-					<input id="delay-feedback" type="text" data-skin="tron">
-					<label for="delay-feedback">Feedback</label>
-				</div>
-			</div>
-			-->
-
 			<label for="effect-buffer">Buffer Size</label>
 			<select id="effect-buffer">
 				<option value="256">256</option>
@@ -211,6 +198,31 @@
 				<option value="4096">4096</option>
 				<option value="8192">8192</option>
 				<option value="16384">16384</option>
+			</select>
+		</div>
+
+		<!-- DELAY -->
+		<div id="module-delay" class="module" style="display: none">
+			<h1>DELAY</h1>
+			<div class="knob-set">
+				<div class="knob-block">
+					<input id="delay-time" type="text" data-skin="tron">
+					<label for="delay-time">Time</label>
+				</div>
+				<div class="knob-block">
+					<input id="delay-feedback" type="text" data-skin="tron">
+					<label for="delay-feedback">Feedback</label>
+				</div>
+			</div>
+		</div>
+
+		<!-- CONVOLVER -->
+		<div id="module-convolver" class="module" style="display: none">
+			<h1>CONVOLVER</h1>
+			<select id="convolver-type" title="Convolver Impulse Response">
+				<option value="none">none</option>
+				<option value="noise">Noise Convolver</option>
+				<option value="hall">Hall Reverb</option>
 			</select>
 		</div>
 

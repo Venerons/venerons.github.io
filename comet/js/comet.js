@@ -59,84 +59,19 @@ ANIMATION
 // # SPLASH SCREEN                              #
 // ##############################################
 
-$('#splash-screen').hide().fadeIn();
-setTimeout(function () {
-	$('#splash-screen').fadeOut();
-}, 1000);
+$('#splash-screen').hide().fadeIn().delay(2000).fadeOut();
 
 // ##############################################
 // # SIDEBAR                                    #
 // ##############################################
 
-$('#button-preset').on('click', function () {
-	if ($('#module-preset').is(':visible')) {
-		$('#module-preset').hide();
+$('.sidebar button').on('click', function () {
+	var $module = $('#module-' + $(this).data('module'));
+	if ($module.is(':visible')) {
+		$module.hide();
 	} else {
 		$('.module').hide();
-		$('#module-preset').show();
-	}
-});
-
-$('#button-osc').on('click', function () {
-	if ($('#module-osc').is(':visible')) {
-		$('#module-osc').hide();
-	} else {
-		$('.module').hide();
-		$('#module-osc').show();
-	}
-});
-
-$('#button-filter').on('click', function () {
-	if ($('#module-filter').is(':visible')) {
-		$('#module-filter').hide();
-	} else {
-		$('.module').hide();
-		$('#module-filter').show();
-	}
-});
-
-$('#button-effect').on('click', function () {
-	if ($('#module-effect').is(':visible')) {
-		$('#module-effect').hide();
-	} else {
-		$('.module').hide();
-		$('#module-effect').show();
-	}
-});
-
-$('#button-compressor').on('click', function () {
-	if ($('#module-compressor').is(':visible')) {
-		$('#module-compressor').hide();
-	} else {
-		$('.module').hide();
-		$('#module-compressor').show();
-	}
-});
-
-$('#button-animation').on('click', function () {
-	if ($('#module-animation').is(':visible')) {
-		$('#module-animation').hide();
-	} else {
-		$('.module').hide();
-		$('#module-animation').show();
-	}
-});
-
-$('#button-settings').on('click', function () {
-	if ($('#module-settings').is(':visible')) {
-		$('#module-settings').hide();
-	} else {
-		$('.module').hide();
-		$('#module-settings').show();
-	}
-});
-
-$('#button-info').on('click', function () {
-	if ($('#module-info').is(':visible')) {
-		$('#module-info').hide();
-	} else {
-		$('.module').hide();
-		$('#module-info').show();
+		$module.show();
 	}
 });
 
@@ -144,7 +79,8 @@ $('#button-info').on('click', function () {
 // # SYNTH                                      #
 // ##############################################
 
-// ( [ OSC1 / OSC2 ] > [ MIX1 / MIX2 ] > [ VELOCITY GAIN ] > [ BIQUAD FILTER ] ) > [ SOUND MIX GAIN ] > [ EFFECT ] > [ MASTER GAIN ] > [ DESTINATION ]
+// ( [ OSC1 / OSC2 ] > [ MIX1 / MIX2 ] > [ VELOCITY GAIN ] > [ BIQUAD FILTER ] ) > [ SOUND MIX GAIN ]
+// > [ EFFECT ] > [ DELAY ] > [ CONVOLVER ] > [ MASTER GAIN ] > [ COMPRESSOR ] > [ DESTINATION ]
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
@@ -169,6 +105,13 @@ SYNTH.settings = {
 		quality: 0,
 		gain: 0
 	},
+	delay: {
+		delayTime: 0,
+		feedback: 0
+	},
+	convolver: {
+		type: 'none'
+	},
 	compressor: {
 		threshold: -24,
 		knee: 30,
@@ -187,6 +130,13 @@ SYNTH.settings = {
 SYNTH.soundMix = SYNTH.context.createGain();
 SYNTH.soundMix.gain.value = 1;
 
+SYNTH.delay = SYNTH.context.createDelay();
+SYNTH.delay.delayTime.value = SYNTH.settings.delay.delayTime;
+SYNTH.feedback = SYNTH.context.createGain();
+SYNTH.feedback.gain.value = SYNTH.settings.delay.feedback;
+
+SYNTH.convolver = SYNTH.context.createConvolver();
+
 SYNTH.master = SYNTH.context.createGain();
 SYNTH.master.gain.value = 0.5;
 
@@ -198,7 +148,11 @@ SYNTH.compressor.reduction.value = SYNTH.settings.compressor.reduction;
 SYNTH.compressor.attack.value = SYNTH.settings.compressor.attack;
 SYNTH.compressor.release.value = SYNTH.settings.compressor.release;
 
-SYNTH.soundMix.connect(SYNTH.master);
+SYNTH.soundMix.connect(SYNTH.delay);
+SYNTH.delay.connect(SYNTH.feedback);
+SYNTH.feedback.connect(SYNTH.delay);
+SYNTH.delay.connect(SYNTH.convolver);
+SYNTH.convolver.connect(SYNTH.master);
 SYNTH.master.connect(SYNTH.compressor);
 SYNTH.compressor.connect(SYNTH.context.destination);
 
@@ -236,6 +190,17 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 
 	var velocityGain = SYNTH.context.createGain();
 	velocityGain.gain.value = velocity;
+	/*
+	var attack = 2, // time in seconds
+		decay = 0.5, // time in seconds
+		sustain = 0.8; // gain
+	var now = SYNTH.context.currentTime;
+	// Attack
+	velocityGain.gain.setValueAtTime(0, now);
+	velocityGain.gain.linearRampToValueAtTime(1, now + (attack / 10));
+	// Decay
+	velocityGain.gain.setTargetAtTime(velocity * sustain / 100, now, (attack + decay) / 10);
+	*/
 
 	// BIQUAD FILTER
 
@@ -292,6 +257,27 @@ SYNTH.removeSound = function (id) {
 	//console.log('removeSound', id);
 	if (SOUNDSMAP.has(id)) {
 		var sound = SOUNDSMAP.get(id);
+
+		/*
+		var release = 2; // time in seconds
+		var velocity = sound.velocity;
+		var now = SYNTH.context.currentTime;
+		velocity.gain.setTargetAtTime(0, now, release / 10);
+		sound.osc1.osc.onend = function () {
+			sound.osc1.osc.disconnect();
+			sound.osc1.mix.disconnect();
+			if (sound.osc2 !== null) {
+				sound.osc2.osc.stop(0);
+				sound.osc2.osc.disconnect();
+				sound.osc2.mix.disconnect();
+			}
+			sound.velocity.disconnect();
+			sound.filter.disconnect();
+			SOUNDSMAP.delete(id);
+		};
+		sound.osc1.osc.stop(now + release);
+		*/
+
 		sound.osc1.osc.stop(0);
 		sound.osc1.osc.disconnect();
 		sound.osc1.mix.disconnect();
@@ -396,7 +382,7 @@ $('#osc1-type').on('change', function () {
 	SOUNDSMAP.forEach(function (sound, id) {
 		SYNTH.removeSound(sound.id);
 	});
-}).val(SYNTH.settings.osc1.type).trigger('change');
+});
 
 $('#osc1-detune').trigger('configure', {
 	min: -1200,
@@ -408,26 +394,29 @@ $('#osc1-detune').trigger('configure', {
 			sound.osc1.osc.detune.value = value;
 		});
 	}
-}).val(SYNTH.settings.osc1.detune).trigger('change');
+});
 
 $('#osc1-mix').trigger('configure', {
 	min: 0,
 	max: 1,
-	step: 0.1,
+	step: 0.01,
 	change: function (value) {
 		SYNTH.settings.osc1.mix = value;
 		SOUNDSMAP.forEach(function (sound, id) {
 			sound.osc1.mix.gain.value = value;
 		});
+	},
+	format: function (value) {
+		return (value * 100) + '%';
 	}
-}).val(SYNTH.settings.osc1.mix).trigger('change');
+});
 
 $('#osc2-type').on('change', function () {
 	SYNTH.settings.osc2.type = $(this).val();
 	SOUNDSMAP.forEach(function (sound, id) {
 		SYNTH.removeSound(sound.id);
 	});
-}).val(SYNTH.settings.osc2.type).trigger('change');
+});
 
 $('#osc2-detune').trigger('configure', {
 	min: -1200,
@@ -441,12 +430,12 @@ $('#osc2-detune').trigger('configure', {
 			}
 		});
 	}
-}).val(SYNTH.settings.osc2.detune).trigger('change');
+});
 
 $('#osc2-mix').trigger('configure', {
 	min: 0,
 	max: 1,
-	step: 0.1,
+	step: 0.01,
 	change: function (value) {
 		SYNTH.settings.osc2.mix = value;
 		SOUNDSMAP.forEach(function (sound, id) {
@@ -454,8 +443,11 @@ $('#osc2-mix').trigger('configure', {
 				sound.osc2.mix.gain.value = value;
 			}
 		});
+	},
+	format: function (value) {
+		return (value * 100) + '%';
 	}
-}).val(SYNTH.settings.osc2.mix).trigger('change');
+});
 
 // ##############################################
 // # BIQUAD FILTER CONTROLS                     #
@@ -464,7 +456,7 @@ $('#osc2-mix').trigger('configure', {
 $('#filter-detune, #filter-frequency, #filter-quality, #filter-gain').knob({
 	width: 75,
 	height: 75,
-	fgColor: '#3DC186',
+	fgColor: '#F3CF3A',
 	angleOffset: 180,
 	thickness: 0.2,
 	font: 'Audiowide',
@@ -475,7 +467,7 @@ $('#filter-type').on('change', function () {
 	SOUNDSMAP.forEach(function (sound, id) {
 		sound.filter.type = $(this).val();
 	});
-}).val(SYNTH.settings.filter.type).trigger('change');
+});
 
 $('#filter-detune').trigger('configure', {
 	min: -1200,
@@ -487,7 +479,7 @@ $('#filter-detune').trigger('configure', {
 			sound.filter.detune.value = value;
 		});
 	}
-}).val(SYNTH.settings.filter.detune).trigger('change');
+});
 
 $('#filter-frequency').trigger('configure', {
 	min: 40,
@@ -502,7 +494,7 @@ $('#filter-frequency').trigger('configure', {
 	format: function (value) {
 		return value + ' Hz';
 	}
-}).val(SYNTH.settings.filter.frequency).trigger('change');
+});
 
 $('#filter-quality').trigger('configure', {
 	min: 0, // 0.0001
@@ -514,7 +506,7 @@ $('#filter-quality').trigger('configure', {
 			sound.filter.Q.value = value;
 		});
 	}
-}).val(SYNTH.settings.filter.quality).trigger('change');
+});
 
 $('#filter-gain').trigger('configure', {
 	min: -40,
@@ -526,7 +518,7 @@ $('#filter-gain').trigger('configure', {
 			sound.filter.gain.value = value;
 		});
 	}
-}).val(SYNTH.settings.filter.gain).trigger('change');
+});
 
 // ##############################################
 // # EFFECT CONTROLS                            #
@@ -551,20 +543,6 @@ var effect = (function() {
 
 //*/
 
-var hallBuffer;
-var r = new XMLHttpRequest();
-r.open('GET', 'hall.ogg', true);
-r.responseType = 'arraybuffer';
-r.onload = function() {
-	var audioData = r.response;
-	SYNTH.context.decodeAudioData(audioData, function (buffer) {
-		hallBuffer = buffer;
-	}, function (e) {
-		"Error with decoding audio data" + e.err
-	});
-}
-r.send();
-
 $('#effect-buffer').on('change', function () {
 	$('#effect-type').trigger('change');
 });
@@ -577,32 +555,7 @@ $('#effect-type').on('change', function () {
 	}
 	SYNTH.soundMix.disconnect();
 
-	if ($(this).val() === 'hallreverb') {
-		// ##############################################
-		// # HALL REVERB                                #
-		// ##############################################
-		SYNTH.effect = (function () {
-			var convolver = SYNTH.context.createConvolver();
-			convolver.buffer = hallBuffer;
-			return convolver;
-		})();
-	} else if ($(this).val() === 'noiseconvolver') {
-		// ##############################################
-		// # NOISE CONVOLVER                            #
-		// ##############################################
-		SYNTH.effect = (function () {
-			var convolver = SYNTH.context.createConvolver(),
-				noiseBuffer = SYNTH.context.createBuffer(2, 0.5 * SYNTH.context.sampleRate, SYNTH.context.sampleRate),
-				left = noiseBuffer.getChannelData(0),
-				right = noiseBuffer.getChannelData(1);
-			for (var i = 0; i < noiseBuffer.length; i++) {
-				left[i] = Math.random() * 2 - 1;
-				right[i] = Math.random() * 2 - 1;
-			}
-			convolver.buffer = noiseBuffer;
-			return convolver;
-		})();
-	} else if ($(this).val() === 'pinkingfilter') {
+	if ($(this).val() === 'pinkingfilter') {
 		// ##############################################
 		// # PINKING FILTER                             #
 		// ##############################################
@@ -694,15 +647,15 @@ $('#effect-type').on('change', function () {
 		SYNTH.soundMix.connect(SYNTH.effect);
 		SYNTH.effect.connect(SYNTH.master);
 	} else {
-		SYNTH.soundMix.connect(SYNTH.master);
+		SYNTH.soundMix.connect(SYNTH.delay);
 	}
 
-}).trigger('change');
+});
 
 $('#moogfilter-cutoff, #moogfilter-resonance, #bitcrusher-bits, #bitcrusher-normfreq').knob({
 	width: 75,
 	height: 75,
-	fgColor: '#37BBBA',
+	fgColor: '#3DC186',
 	angleOffset: 180,
 	thickness: 0.2,
 	font: 'Audiowide'
@@ -744,37 +697,93 @@ $('#bitcrusher-normfreq').trigger('configure', {
 	}
 }).val(0.1).trigger('change');
 
-/*
-$('#delay-time').val(0).knob({
+// ##############################################
+// # DELAY CONTROLS                             #
+// ##############################################
+
+$('#delay-time, #delay-feedback').knob({
+	width: 75,
+	height: 75,
+	fgColor: '#37BBBA',
+	angleOffset: 180,
+	thickness: 0.2,
+	font: 'Audiowide'
+});
+
+$('#delay-time').trigger('configure', {
 	min: 0,
 	max: 1,
 	step: 0.01,
-	width: 75,
-	height: 75,
-	fgColor: '#37BBBA',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
 	change: function (value) {
-		SYNTH.effect.updateDelayTime(value);
+		console.log('delay-time change', value);
+		SYNTH.delay.delayTime.value = value;
+		SYNTH.settings.delay.delayTime = value;
+	},
+	format: function (value) {
+		console.log('delay-time format', value);
+		return (value * 1000) + 'ms';
 	}
-}).trigger('change');
+});
 
-$('#delay-feedback').val(0).knob({
+$('#delay-feedback').trigger('configure', {
 	min: 0,
 	max: 1,
-	step: 0.1,
-	width: 75,
-	height: 75,
-	fgColor: '#37BBBA',
-	angleOffset: 180,
-	thickness: 0.2,
-	font: 'Audiowide',
+	step: 0.01,
 	change: function (value) {
-		SYNTH.effect.updateFeedback(value);
+		console.log('delay-feedback change', value);
+		SYNTH.feedback.gain.value = value;
+		SYNTH.settings.delay.feedback = value;
+	},
+	format: function (value) {
+		console.log('delay-feedback format', value);
+		return (value * 100) + '%';
 	}
-}).trigger('change');
-*/
+});
+
+// ##############################################
+// # CONVOLVER CONTROLS                         #
+// ##############################################
+
+SYNTH.convolverBuffers = {
+	'none': null
+};
+
+// ##############################################
+// # NOISE CONVOLVER                            #
+// ##############################################
+(function () {
+	var noiseBuffer = SYNTH.context.createBuffer(2, 0.5 * SYNTH.context.sampleRate, SYNTH.context.sampleRate),
+		left = noiseBuffer.getChannelData(0),
+		right = noiseBuffer.getChannelData(1);
+	for (var i = 0; i < noiseBuffer.length; i++) {
+		left[i] = Math.random() * 2 - 1;
+		right[i] = Math.random() * 2 - 1;
+	}
+	SYNTH.convolverBuffers.noise = noiseBuffer;
+})();
+
+// ##############################################
+// # HALL REVERB                                #
+// ##############################################
+(function () {
+	var r = new XMLHttpRequest();
+	r.open('GET', 'hall.ogg', true);
+	r.responseType = 'arraybuffer';
+	r.onload = function() {
+		var audioData = r.response;
+		SYNTH.context.decodeAudioData(audioData, function (buffer) {
+			SYNTH.convolverBuffers.hall = buffer;
+		}, function (e) {
+			"Error with decoding audio data" + e.err
+		});
+	}
+	r.send();
+})();
+
+$('#convolver-type').on('change', function () {
+	SYNTH.settings.convolver.type = $(this).val();
+	SYNTH.convolver.buffer = SYNTH.convolverBuffers[$(this).val()];
+});
 
 // ##############################################
 // # DYNAMICS COMPRESSOR                        #
@@ -797,7 +806,7 @@ $('#compressor-threshold').trigger('configure', {
 		SYNTH.settings.compressor.threshold = value;
 		SYNTH.compressor.threshold.value = value;
 	}
-}).val(SYNTH.settings.compressor.threshold).trigger('change');
+});
 
 $('#compressor-knee').trigger('configure', {
 	min: 0, // min: 0 - max: 40  - step: 0.1
@@ -807,7 +816,7 @@ $('#compressor-knee').trigger('configure', {
 		SYNTH.settings.compressor.knee = value;
 		SYNTH.compressor.knee.value = value;
 	}
-}).val(SYNTH.settings.compressor.knee).trigger('change');
+});
 
 $('#compressor-ratio').trigger('configure', {
 	min: 1, // min: 1 - max: 20 - step: 1
@@ -817,7 +826,7 @@ $('#compressor-ratio').trigger('configure', {
 		SYNTH.settings.compressor.ratio = value;
 		SYNTH.compressor.ratio.value = value;
 	}
-}).val(SYNTH.settings.compressor.ratio).trigger('change');
+});
 
 $('#compressor-reduction').trigger('configure', {
 	min: -20, // min: -20 - max: 0 - step: 1
@@ -827,7 +836,7 @@ $('#compressor-reduction').trigger('configure', {
 		SYNTH.settings.compressor.reduction = value;
 		SYNTH.compressor.reduction.value = value;
 	}
-}).val(SYNTH.settings.compressor.reduction).trigger('change');
+});
 
 $('#compressor-attack').trigger('configure', {
 	min: 0, // min: 0 - max: 1 - step: 0.001
@@ -837,7 +846,7 @@ $('#compressor-attack').trigger('configure', {
 		SYNTH.settings.compressor.attack = value;
 		SYNTH.compressor.attack.value = value;
 	}
-}).val(SYNTH.settings.compressor.attack).trigger('change');
+});
 
 $('#compressor-release').trigger('configure', {
 	min: 0, // min: 0 - max: 1 - step: 0.001
@@ -847,7 +856,7 @@ $('#compressor-release').trigger('configure', {
 		SYNTH.settings.compressor.release = value;
 		SYNTH.compressor.release.value = value;
 	}
-}).val(SYNTH.settings.compressor.release).trigger('change');
+});
 
 // ##############################################
 // # ANIMATION CONTROLS                         #
@@ -1037,7 +1046,7 @@ $('#animation-type').on('change', function () {
 		SYNTH.script.connect(SYNTH.context.destination); // only needed by Safari, useless otherwise
 	}
 
-}).trigger('change');
+});
 
 // ##############################################
 // # KEYBOARD                                   #
@@ -1104,6 +1113,8 @@ var presets = [
 		"osc1": { "type": "sawtooth", "detune": 0, "mix": 1 },
 		"osc2": { "type": "none", "detune": 0, "mix": 1 },
 		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
+		"delay": { "delayTime": 0, "feedback": 0 },
+		"convolver": { "type": "none" },
 		"compressor": { "threshold": -24, "knee": 30, "ratio": 12, "reduction": 0, "attack": 0.003, "release": 0.25 },
 		"animation": { "type": "circularspectrum", "analyserFFT": 512, "scriptBuffer": 512 }
 	},
@@ -1113,6 +1124,8 @@ var presets = [
 		"osc1": { "type": "sine", "detune": 0, "mix": 1 },
 		"osc2": { "type": "sine", "detune": 1200, "mix": 1 },
 		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
+		"delay": { "delayTime": 0, "feedback": 0 },
+		"convolver": { "type": "none" },
 		"compressor": { "threshold": -24, "knee": 30, "ratio": 12, "reduction": 0, "attack": 0.003, "release": 0.25 },
 		"animation": { "type": "circularspectrum", "analyserFFT": 512, "scriptBuffer": 512 }
 	},
@@ -1122,6 +1135,8 @@ var presets = [
 		"osc1": { "type": "sawtooth", "detune": 0, "mix": 1 },
 		"osc2": { "type": "sawtooth", "detune": -1200, "mix": 0.5 },
 		"filter": { "type": "lowpass", "detune": 0, "frequency": 3000, "quality": 26, "gain": 0 },
+		"delay": { "delayTime": 0, "feedback": 0 },
+		"convolver": { "type": "none" },
 		"compressor": { "threshold": -24, "knee": 30, "ratio": 12, "reduction": 0, "attack": 0.003, "release": 0.25 },
 		"animation": { "type": "circularspectrum", "analyserFFT": 512, "scriptBuffer": 512 }
 	}
@@ -1152,6 +1167,11 @@ $('#preset-id').on('change', function () {
 			$('#filter-quality').val(SYNTH.settings.filter.quality).trigger('change');
 			$('#filter-gain').val(SYNTH.settings.filter.gain).trigger('change');
 
+			$('#delay-time').val(SYNTH.settings.delay.delayTime).trigger('change');
+			$('#delay-feedback').val(SYNTH.settings.delay.feedback).trigger('change');
+
+			$('#convolver-type').val(SYNTH.settings.convolver.type).trigger('change');
+
 			$('#compressor-threshold').val(SYNTH.settings.compressor.threshold).trigger('change');
 			$('#compressor-knee').val(SYNTH.settings.compressor.knee).trigger('change');
 			$('#compressor-ratio').val(SYNTH.settings.compressor.ratio).trigger('change');
@@ -1159,9 +1179,9 @@ $('#preset-id').on('change', function () {
 			$('#compressor-attack').val(SYNTH.settings.compressor.attack).trigger('change');
 			$('#compressor-release').val(SYNTH.settings.compressor.release).trigger('change');
 
-			$('#animation-type').val(SYNTH.settings.animation.type).trigger('change');
+			$('#animation-type').val(SYNTH.settings.animation.type);
+			$('#animation-script-buffer').val(SYNTH.settings.animation.scriptBuffer);
 			$('#animation-analyser-fft').val(SYNTH.settings.animation.analyserFFT).trigger('change');
-			$('#animation-script-buffer').val(SYNTH.settings.animation.scriptBuffer).trigger('change');
 
 			console.log('preset "' + preset.name + '" loaded')
 
@@ -1305,16 +1325,7 @@ $('#surface')
 		SYNTH.addSound('pointer-' + e.pointerId, frequency, e.pressure, filterFrequency);
 
 		if (!points.has(e.pointerId)) {
-			/*
-			var colors = [
-				'#288edf', 'darkred', 'crimson', 'salmon', 'coral',
-				'darkorange', 'orange', 'gold', 'palegoldenrod', 'darkolivegreen',
-				'forestgreen', 'limegreen', 'lightgreen', 'mediumaquamarine', 'turquoise',
-				'mediumturquoise', 'deepskyblue', 'dodgerblue', 'mediumpurple', 'blueviolet',
-				'mediumvioletred'
-			];
-			*/
-			var colors = ['#D34D2E', '#FF9900', '#3DC186', '#37BBBA', '#F23A65', '#E6E6E6', '#999999'];
+			var colors = [ '#D34D2E', '#FF9900', '#F3CF3A', '#44DE43', '#3DC186', '#37BBBA', '#4DC3FA', '#B158B6', '#FB6368', '#F23A65' ];
 			points.set(e.pointerId, {
 				id: e.pointerId,
 				x: e.pageX,

@@ -162,6 +162,9 @@ a {
 		display: block;
 		font-size: 0.7rem;
 	}
+	input {
+		font-size: 12px !important;
+	}
 }
 
 #splash-screen {
@@ -197,137 +200,62 @@ a {
 	display: block;
 }
 
-#button-preset {
-	color: #D34D2E;
-	border: 1px solid #D34D2E;
+/*
 
-	&:hover, &:focus, &:active {
-		background: #D34D2E;
-	}
-}
+#D34D2E
+#FF9900
+#F3CF3A
+#44DE43
+#3DC186
+#37BBBA
+#4DC3FA
+#B158B6
+#FB6368
+#F23A65
 
-#module-preset {
-	color: #D34D2E;
-	border: 1px solid #D34D2E;
+*/
 
-	h1 {
-		color: #D34D2E;
-	}
-	select, button {
-		border: 1px solid #D34D2E;
-	}
-	button {
-		&:hover, &:focus, &:active {
-			background: #D34D2E;
-		}
-	}
-}
+$modules: (
+    preset: #D34D2E,
+    osc: #FF9900,
+    filter: #F3CF3A,
+    effect: #3DC186,
+    delay: #37BBBA,
+    convolver: #4DC3FA,
+    compressor: #B158B6,
+    animation: #FB6368
+);
 
-#button-osc {
-	color: #FF9900;
-	border: 1px solid #FF9900;
+@each $module, $color in $modules {
+    #module-#{$module} {
+        color: $color;
+    }
 
-	&:hover, &:focus, &:active {
-		background: #FF9900;
-	}
-}
+    #button-#{$module} {
+    	color: $color;
+    	border: 1px solid $color;
 
-#module-osc {
-	color: #FF9900;
-	border: 1px solid #FF9900;
+    	&:hover, &:focus, &:active {
+    		background: $color;
+    	}
+    }
 
-	h1 {
-		color: #FF9900;
-	}
-	select, button {
-		border: 1px solid #FF9900;
-	}
-}
+    #module-#{$module} {
+    	color: $color;
+    	border: 1px solid $color;
 
-#button-filter {
-	color: #3DC186;
-	border: 1px solid #3DC186;
-
-	&:hover, &:focus, &:active {
-		background: #3DC186;
-	}
-}
-
-#module-filter {
-	color: #3DC186;
-	border: 1px solid #3DC186;
-
-	h1 {
-		color: #3DC186;
-	}
-	select, button {
-		border: 1px solid #3DC186;
-	}
-}
-
-#button-effect {
-	color: #37BBBA;
-	border: 1px solid #37BBBA;
-
-	&:hover, &:focus, &:active {
-		background: #37BBBA;
-	}
-}
-
-#module-effect {
-	color: #37BBBA;
-	border: 1px solid #37BBBA;
-
-	h1 {
-		color: #37BBBA;
-	}
-	select, button {
-		border: 1px solid #37BBBA;
-	}
-}
-
-#button-compressor {
-	color: #B158B6;
-	border: 1px solid #B158B6;
-
-	&:hover, &:focus, &:active {
-		background: #B158B6;
-	}
-}
-
-#module-compressor {
-	width: 400px;
-	color: #B158B6;
-	border: 1px solid #B158B6;
-
-	h1 {
-		color: #B158B6;
-	}
-	select, button {
-		border: 1px solid #B158B6;
-	}
-}
-
-#button-animation {
-	color: #F23A65;
-	border: 1px solid #F23A65;
-
-	&:hover, &:focus, &:active {
-		background: #F23A65;
-	}
-}
-
-#module-animation {
-	width: 400px;
-	color: #F23A65;
-	border: 1px solid #F23A65;
-
-	h1 {
-		color: #F23A65;
-	}
-	select, button {
-		border: 1px solid #F23A65;
-	}
+    	h1 {
+    		color: $color;
+    	}
+    	select, button {
+    		border: 1px solid $color;
+    	}
+    	button {
+    		&:hover, &:focus, &:active {
+    			background: $color;
+    		}
+    	}
+    }
 }
 
 #button-info {
