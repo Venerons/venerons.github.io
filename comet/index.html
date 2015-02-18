@@ -61,7 +61,6 @@
 			<button id="button-osc" data-module="osc">O</button>
 			<button id="button-filter" data-module="filter">F</button>
 			<button id="button-effect" data-module="effect">E</button>
-			<button id="button-delay" data-module="delay">D</button>
 			<button id="button-convolver" data-module="convolver">C</button>
 			<button id="button-compressor" data-module="compressor">C</button>
 			<button id="button-animation" data-module="animation">A</button>
@@ -75,7 +74,7 @@
 				<option value="none">none</option>
 			</select>
 			<button id="preset-save">Save</button>
-			<button id="preset-export">Export</button>
+			<!--<button id="preset-export">Export</button>-->
 		</div>
 
 		<!-- OSCILLATOR -->
@@ -167,6 +166,7 @@
 				<option value="bitcrusher">BitCrusher</option>
 			</select>
 
+			<!-- MOOG FILTER SETTINGS -->
 			<div id="moogfilter-settings" class="knob-set" style="display: none">
 				<div class="knob-block">
 					<input id="moogfilter-cutoff" type="text" data-skin="tron">
@@ -178,6 +178,7 @@
 				</div>
 			</div>
 
+			<!-- BITCRUSHER SETTINGS -->
 			<div id="bitcrusher-settings" class="knob-set" style="display: none">
 				<div class="knob-block">
 					<input id="bitcrusher-bits" type="text" data-skin="tron">
@@ -188,6 +189,20 @@
 					<label for="bitcrusher-normfreq">Normalize Frequency</label>
 				</div>
 			</div>
+
+			<!-- DELAY SETTINGS -->
+			<!--
+			<div id="delay-settings" class="knob-set" style="display: none">
+				<div class="knob-block">
+					<input id="delay-time" type="text" data-skin="tron">
+					<label for="delay-time">Time</label>
+				</div>
+				<div class="knob-block">
+					<input id="delay-feedback" type="text" data-skin="tron">
+					<label for="delay-feedback">Feedback</label>
+				</div>
+			</div>
+			-->
 
 			<label for="effect-buffer">Buffer Size</label>
 			<select id="effect-buffer">
@@ -201,21 +216,6 @@
 			</select>
 		</div>
 
-		<!-- DELAY -->
-		<div id="module-delay" class="module" style="display: none">
-			<h1>DELAY</h1>
-			<div class="knob-set">
-				<div class="knob-block">
-					<input id="delay-time" type="text" data-skin="tron">
-					<label for="delay-time">Time</label>
-				</div>
-				<div class="knob-block">
-					<input id="delay-feedback" type="text" data-skin="tron">
-					<label for="delay-feedback">Feedback</label>
-				</div>
-			</div>
-		</div>
-
 		<!-- CONVOLVER -->
 		<div id="module-convolver" class="module" style="display: none">
 			<h1>CONVOLVER</h1>
@@ -223,6 +223,10 @@
 				<option value="none">none</option>
 				<option value="noise">Noise Convolver</option>
 				<option value="hall">Hall Reverb</option>
+				<option value="telephone">Telephone</option>
+				<option value="muffler">Muffler</option>
+				<option value="spring_feedback">Spring Feedback</option>
+				<option value="echo">Echo</option>
 			</select>
 		</div>
 
@@ -305,10 +309,10 @@
 		<script type="application/javascript" src="js/lib/palette.min.js"></script>
 		<script type="application/javascript" src="js/lib/hand-1.3.8.js"></script>
 		<script type="application/javascript" src="js/lib/localforage.js"></script>
-		<script type="application/javascript" src="js/lib/jquery-2.1.1.min.js"></script>
+		<script type="application/javascript" src="js/lib/jquery-2.1.3.min.js"></script>
 		<script type="application/javascript" src="js/lib/jquery.knob.min.js"></script>
 		<script type="application/javascript" src="js/lib/raphael-2.1.2.js"></script>
 		<script type="application/javascript" src="js/lib/qwerty-hancock.js"></script>
-		<script type="application/javascript" src="js/comet.js"></script>
+		<script type="application/javascript;version=1.7" src="js/comet.js"></script>
 	</body>
 </html>

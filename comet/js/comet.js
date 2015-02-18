@@ -12,14 +12,16 @@ CONTROLS
 * Multitouch
 * Mouse click-and-drag
 * Computer Keyboard
-* Presets save and load
+* Presets save & load
 
 SYNTH
 
 * True Poliphonic Synth
-* 2 Oscillators with 4 Waveforms each (Sine, Sawtooth, Square, Triangle), detune and mix
+* 2 Oscillators with 4 Waveforms (Sine, Sawtooth, Square, Triangle), detune and mix each
 * 1 Biquad Filter with Detune, Frequency, Quality, Gain
-* 5 Effects (Noise Convolver, Pinking Filter, Moog Filter, BitCrusher, Delay)
+* 3 Effects (Pinking Filter, Moog Filter, BitCrusher)
+* 6 Convolver Effects (Noise Convolver, Hall Reverb, Telephone, Muffler, Spring Feedback, Echo)
+* 1 Dynamics Compressor
 
 ANIMATION
 
@@ -34,22 +36,19 @@ ANIMATION
 // ##############################################
 /*
 
-* Import Preset
+* Export & Import Preset
 * More Presets (e ricordati di aggiungere i settings degli effetti nei presets!)
 * Oscillators Range (2, 4, 8, 16, 32, 64)
 * Noise Generators
 * New Oscillator: Supersaw
 * LFO
-* Filter Envelope (Attack, Decay, Sustain, Release)
 * Volume Envelope (Attack, Decay, Sustain, Release)
+* Filter Envelope (Attack, Decay, Sustain, Release)
 * Custom Master Volume
 * Modulation - modify filter frequency using pointer pageY OR Device Orientation API
 * Pitch control with Device Orientation API
-* Effects Customizable Parameters
-* Effect: Delay
 * Pointer visual effects (using width, height, tiltx, tilty, pressure)
 * Fullscreen API
-* Page Visibility API
 * Screen Orientation API
 * Speech Syntesis API - Web Speech API
 * Proximity API
@@ -80,7 +79,7 @@ $('.sidebar button').on('click', function () {
 // ##############################################
 
 // ( [ OSC1 / OSC2 ] > [ MIX1 / MIX2 ] > [ VELOCITY GAIN ] > [ BIQUAD FILTER ] ) > [ SOUND MIX GAIN ]
-// > [ EFFECT ] > [ DELAY ] > [ CONVOLVER ] > [ MASTER GAIN ] > [ COMPRESSOR ] > [ DESTINATION ]
+// > [ EFFECT ] > [ CONVOLVER ] > [ MASTER GAIN ] > [ COMPRESSOR ] > [ DESTINATION ]
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
@@ -105,10 +104,6 @@ SYNTH.settings = {
 		quality: 0,
 		gain: 0
 	},
-	delay: {
-		delayTime: 0,
-		feedback: 0
-	},
 	convolver: {
 		type: 'none'
 	},
@@ -127,13 +122,15 @@ SYNTH.settings = {
 	}
 };
 
+SYNTH.sharedFilter = SYNTH.context.createBiquadFilter();
+SYNTH.sharedFilter.type = SYNTH.settings.filter.type;
+SYNTH.sharedFilter.detune.value = SYNTH.settings.filter.detune;
+SYNTH.sharedFilter.frequency.value = Math.min(SYNTH.settings.filter.frequency, SYNTH.context.sampleRate / 2);
+SYNTH.sharedFilter.Q.value = SYNTH.settings.filter.quality;
+SYNTH.sharedFilter.gain.value = SYNTH.settings.filter.gain;
+
 SYNTH.soundMix = SYNTH.context.createGain();
 SYNTH.soundMix.gain.value = 1;
-
-SYNTH.delay = SYNTH.context.createDelay();
-SYNTH.delay.delayTime.value = SYNTH.settings.delay.delayTime;
-SYNTH.feedback = SYNTH.context.createGain();
-SYNTH.feedback.gain.value = SYNTH.settings.delay.feedback;
 
 SYNTH.convolver = SYNTH.context.createConvolver();
 
@@ -148,18 +145,44 @@ SYNTH.compressor.reduction.value = SYNTH.settings.compressor.reduction;
 SYNTH.compressor.attack.value = SYNTH.settings.compressor.attack;
 SYNTH.compressor.release.value = SYNTH.settings.compressor.release;
 
-SYNTH.soundMix.connect(SYNTH.delay);
-SYNTH.delay.connect(SYNTH.feedback);
-SYNTH.feedback.connect(SYNTH.delay);
-SYNTH.delay.connect(SYNTH.convolver);
+SYNTH.sharedFilter.connect(SYNTH.soundMix);
+SYNTH.soundMix.connect(SYNTH.convolver);
 SYNTH.convolver.connect(SYNTH.master);
 SYNTH.master.connect(SYNTH.compressor);
 SYNTH.compressor.connect(SYNTH.context.destination);
 
+/*
+var rangeToFrequency = function (baseFrequency, range) {
+	var frequency = baseFrequency;
+
+	switch (range) {
+		case '2':
+			frequency = baseFrequency * 4;
+			break;
+		case '4':
+			frequency = baseFrequency * 2;
+			break;
+		case '16':
+			frequency = baseFrequency / 2;
+			break;
+		case '32':
+			frequency = baseFrequency / 4;
+			break;
+		case '64':
+			frequency = baseFrequency / 8;
+			break;
+		default:
+			break;
+	};
+
+	return frequency;
+};
+*/
+
 var SOUNDSMAP = new Map();
 
-SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
-	//console.log('addSound', id, frequency, velocity, filterFrequency);
+SYNTH.addVoice = function (id, frequency, velocity, filterFrequency) {
+	//console.log('addVoice', id, frequency, velocity, filterFrequency);
 	var settings = SYNTH.settings;
 
 	// OSCILLATOR 1
@@ -204,12 +227,16 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 
 	// BIQUAD FILTER
 
-	var filter = SYNTH.context.createBiquadFilter();
-	filter.type = settings.filter.type;
-	filter.detune.value = settings.filter.detune;
-	filter.frequency.value = Math.min(filterFrequency || settings.filter.frequency, SYNTH.context.sampleRate / 2);
-	filter.Q.value = settings.filter.quality;
-	filter.gain.value = settings.filter.gain;
+	var filter = null;
+	if (id.indexOf('keyboard') === -1) {
+		// NOT A KEYBOARD TRIGGERED VOICE
+		filter = SYNTH.context.createBiquadFilter();
+		filter.type = settings.filter.type;
+		filter.detune.value = settings.filter.detune;
+		filter.frequency.value = Math.min(filterFrequency || settings.filter.frequency, SYNTH.context.sampleRate / 2);
+		filter.Q.value = settings.filter.quality;
+		filter.gain.value = settings.filter.gain;
+	}
 
 	// CONNECTIONS
 
@@ -221,23 +248,28 @@ SYNTH.addSound = function (id, frequency, velocity, filterFrequency) {
 		mix2.connect(velocityGain);
 	}
 
-	velocityGain.connect(filter);
-	filter.connect(SYNTH.soundMix);
+	if (id.indexOf('keyboard') === -1) {
+		// NOT A KEYBOARD TRIGGERED VOICE
+		velocityGain.connect(filter);
+		filter.connect(SYNTH.soundMix);
+	} else {
+		velocityGain.connect(SYNTH.sharedFilter);
+	}
 
 	if (SOUNDSMAP.has(id)) {
-		SYNTH.removeSound(id);
+		SYNTH.removeVoice(id);
 	}
 	SOUNDSMAP.set(id, {
 		id: id,
 		osc1: { osc: osc1, mix: mix1 },
 		osc2: settings.osc2.type !== 'none' ? { osc: osc2, mix: mix2 } : null,
 		velocity: velocityGain,
-		filter: filter
+		filter: filter // if keyboard triggered, is null
 	});
 };
 
-SYNTH.updateSound = function (id, frequency, velocity, filterFrequency) {
-	//console.log('updateSound', id, frequency, velocity, filterFrequency);
+SYNTH.updateVoice = function (id, frequency, velocity, filterFrequency) {
+	//console.log('updateVoice', id, frequency, velocity, filterFrequency);
 	if (SOUNDSMAP.has(id)) {
 		var sound = SOUNDSMAP.get(id);
 		sound.osc1.osc.frequency.value = frequency;
@@ -247,14 +279,14 @@ SYNTH.updateSound = function (id, frequency, velocity, filterFrequency) {
 		if (velocity !== null) {
 			sound.velocity.gain.value = velocity;
 		}
-		if (filterFrequency !== null) {
+		if (sound.filter !== null && filterFrequency !== null) {
 			sound.filter.frequency.value = filterFrequency;
 		}
 	}
 };
 
-SYNTH.removeSound = function (id) {
-	//console.log('removeSound', id);
+SYNTH.removeVoice = function (id) {
+	//console.log('removeVoice', id);
 	if (SOUNDSMAP.has(id)) {
 		var sound = SOUNDSMAP.get(id);
 
@@ -287,7 +319,9 @@ SYNTH.removeSound = function (id) {
 			sound.osc2.mix.disconnect();
 		}
 		sound.velocity.disconnect();
-		sound.filter.disconnect();
+		if (sound.filter !== null) {
+			sound.filter.disconnect();
+		}
 		SOUNDSMAP.delete(id);
 	}
 };
@@ -380,7 +414,7 @@ $('#osc1-detune, #osc1-mix, #osc2-detune, #osc2-mix').knob({
 $('#osc1-type').on('change', function () {
 	SYNTH.settings.osc1.type = $(this).val();
 	SOUNDSMAP.forEach(function (sound, id) {
-		SYNTH.removeSound(sound.id);
+		SYNTH.removeVoice(sound.id);
 	});
 });
 
@@ -414,7 +448,7 @@ $('#osc1-mix').trigger('configure', {
 $('#osc2-type').on('change', function () {
 	SYNTH.settings.osc2.type = $(this).val();
 	SOUNDSMAP.forEach(function (sound, id) {
-		SYNTH.removeSound(sound.id);
+		SYNTH.removeVoice(sound.id);
 	});
 });
 
@@ -464,8 +498,11 @@ $('#filter-detune, #filter-frequency, #filter-quality, #filter-gain').knob({
 
 $('#filter-type').on('change', function () {
 	SYNTH.settings.filter.type = $(this).val();
+	SYNTH.sharedFilter.type = $(this).val();
 	SOUNDSMAP.forEach(function (sound, id) {
-		sound.filter.type = $(this).val();
+		if (sound.filter !== null) {
+			sound.filter.type = $(this).val();
+		}
 	});
 });
 
@@ -475,8 +512,11 @@ $('#filter-detune').trigger('configure', {
 	step: 1,
 	change: function (value) {
 		SYNTH.settings.filter.detune = value;
+		SYNTH.sharedFilter.detune.value = value;
 		SOUNDSMAP.forEach(function (sound, id) {
-			sound.filter.detune.value = value;
+			if (sound.filter !== null) {
+				sound.filter.detune.value = value;
+			}
 		});
 	}
 });
@@ -487,8 +527,11 @@ $('#filter-frequency').trigger('configure', {
 	step: 1,
 	change: function (value) {
 		SYNTH.settings.filter.frequency = value;
+		SYNTH.sharedFilter.frequency.value = value;
 		SOUNDSMAP.forEach(function (sound, id) {
-			sound.filter.frequency.value = value;
+			if (sound.filter !== null) {
+				sound.filter.frequency.value = value;
+			}
 		});
 	},
 	format: function (value) {
@@ -502,8 +545,11 @@ $('#filter-quality').trigger('configure', {
 	step: 0.03, // 0.0001
 	change: function (value) {
 		SYNTH.settings.filter.quality = value;
+		SYNTH.sharedFilter.Q.value = value;
 		SOUNDSMAP.forEach(function (sound, id) {
-			sound.filter.Q.value = value;
+			if (sound.filter !== null) {
+				sound.filter.Q.value = value;
+			}
 		});
 	}
 });
@@ -514,8 +560,11 @@ $('#filter-gain').trigger('configure', {
 	step: 1,
 	change: function (value) {
 		SYNTH.settings.filter.gain = value;
+		SYNTH.sharedFilter.gain.value = value;
 		SOUNDSMAP.forEach(function (sound, id) {
-			sound.filter.gain.value = value;
+			if (sound.filter !== null) {
+				sound.filter.gain.value = value;
+			}
 		});
 	}
 });
@@ -548,7 +597,7 @@ $('#effect-buffer').on('change', function () {
 });
 
 $('#effect-type').on('change', function () {
-	$('#delay-settings, #moogfilter-settings, #bitcrusher-settings').hide();
+	$('#moogfilter-settings, #bitcrusher-settings').hide();
 	if (SYNTH.effect) {
 		SYNTH.effect.disconnect();
 		delete SYNTH.effect;
@@ -645,9 +694,9 @@ $('#effect-type').on('change', function () {
 
 	if (SYNTH.effect) {
 		SYNTH.soundMix.connect(SYNTH.effect);
-		SYNTH.effect.connect(SYNTH.master);
+		SYNTH.effect.connect(SYNTH.convolver);
 	} else {
-		SYNTH.soundMix.connect(SYNTH.delay);
+		SYNTH.soundMix.connect(SYNTH.convolver);
 	}
 
 });
@@ -664,8 +713,9 @@ $('#moogfilter-cutoff, #moogfilter-resonance, #bitcrusher-bits, #bitcrusher-norm
 $('#moogfilter-cutoff').trigger('configure', {
 	min: 0,
 	max: 1,
-	step: 0.01,
+	step: 0.001,
 	change: function (value) {
+		console.log('moogfilter-cutoff', 'change', value);
 		SYNTH.effect.cutoff = value;
 	}
 }).val(0.065).trigger('change');
@@ -700,7 +750,7 @@ $('#bitcrusher-normfreq').trigger('configure', {
 // ##############################################
 // # DELAY CONTROLS                             #
 // ##############################################
-
+/*
 $('#delay-time, #delay-feedback').knob({
 	width: 75,
 	height: 75,
@@ -739,7 +789,7 @@ $('#delay-feedback').trigger('configure', {
 		return (value * 100) + '%';
 	}
 });
-
+*/
 // ##############################################
 // # CONVOLVER CONTROLS                         #
 // ##############################################
@@ -749,35 +799,59 @@ SYNTH.convolverBuffers = {
 };
 
 // ##############################################
-// # NOISE CONVOLVER                            #
+// # LOAD IMPULSE RESPONSES                     #
 // ##############################################
-(function () {
-	var noiseBuffer = SYNTH.context.createBuffer(2, 0.5 * SYNTH.context.sampleRate, SYNTH.context.sampleRate),
-		left = noiseBuffer.getChannelData(0),
-		right = noiseBuffer.getChannelData(1);
-	for (var i = 0; i < noiseBuffer.length; i++) {
-		left[i] = Math.random() * 2 - 1;
-		right[i] = Math.random() * 2 - 1;
-	}
-	SYNTH.convolverBuffers.noise = noiseBuffer;
-})();
 
-// ##############################################
-// # HALL REVERB                                #
-// ##############################################
 (function () {
-	var r = new XMLHttpRequest();
-	r.open('GET', 'hall.ogg', true);
-	r.responseType = 'arraybuffer';
-	r.onload = function() {
-		var audioData = r.response;
-		SYNTH.context.decodeAudioData(audioData, function (buffer) {
-			SYNTH.convolverBuffers.hall = buffer;
-		}, function (e) {
-			"Error with decoding audio data" + e.err
+	var loadAudioBuffer = function (url) {
+		return new Promise(function (resolve, reject) {
+			var request = new XMLHttpRequest();
+			request.open('GET', url, true);
+			request.responseType = 'arraybuffer';
+			request.onload = function () {
+				if (request.status === 200) {
+					SYNTH.context.decodeAudioData(request.response, function (buffer) {
+						resolve(buffer);
+					}, function (e) {
+						reject(new Error('Error on decodeAudioData [ERROR: ' + e.toString() + ']'));
+					});
+				} else {
+					reject(new Error('Error on request onload [ERROR CODE: ' + request.statusText + ']'));
+				}
+			};
+			request.onerror = function () {
+				reject(new Error('Error on request onerror'));
+			};
+			request.send();
 		});
-	}
-	r.send();
+	};
+
+	[
+		{ name: 'hall', url: 'assets/hall.ogg' },
+		{ name: 'telephone', url: 'assets/telephone.wav' },
+		{ name: 'muffler', url: 'assets/muffler.wav' },
+		{ name: 'spring_feedback', url: 'assets/spring_feedback.wav' },
+		{ name: 'echo', url: 'assets/echo.wav' }
+	].forEach(function (item) {
+		loadAudioBuffer(item.url).then(function (buffer) {
+			SYNTH.convolverBuffers[item.name] = buffer;
+		}, function (error) {
+			console.error(error);
+		});
+	});
+
+	// NOISE CONVOLVER
+	(function () {
+		var noiseBuffer = SYNTH.context.createBuffer(2, 0.5 * SYNTH.context.sampleRate, SYNTH.context.sampleRate),
+			left = noiseBuffer.getChannelData(0),
+			right = noiseBuffer.getChannelData(1);
+		for (var i = 0; i < noiseBuffer.length; i++) {
+			left[i] = Math.random() * 2 - 1;
+			right[i] = Math.random() * 2 - 1;
+		}
+		SYNTH.convolverBuffers.noise = noiseBuffer;
+	})();
+
 })();
 
 $('#convolver-type').on('change', function () {
@@ -792,7 +866,7 @@ $('#convolver-type').on('change', function () {
 $('#compressor-threshold, #compressor-knee, #compressor-ratio, #compressor-reduction, #compressor-attack, #compressor-release').knob({
 	width: 75,
 	height: 75,
-	fgColor: '#B158B6',
+	fgColor: '#4DC3FA',
 	angleOffset: 180,
 	thickness: 0.2,
 	font: 'Audiowide'
@@ -1059,25 +1133,26 @@ X	-> Octave Up
 */
 
 function connectKeyboard(startNote) {
-	var keyboard = qwertyHancock({
+	var keyboard = new QwertyHancock({
 		id: 'keyboard',
 		width: window.innerWidth,
 		height: window.innerHeight / 2,
 		octaves: 2,
 		startNote: startNote,
-		whiteNotesColour: 'white',
-		blackNotesColour: 'black',
-		hoverColour: '#f3e939',
+		whiteKeyColour: '#E7ECEE',
+		blackKeyColour: '#1F2022',
+		activeColour: '#46C891',
+		borderColour: 'black',
 		keyboardLayout: 'en'
 	});
 
-	keyboard.keyDown(function (note, frequency) {
-		SYNTH.addSound('keyboard-' + note, frequency, 0.5);
-	});
+	keyboard.keyDown = function (note, frequency) {
+		SYNTH.addVoice('keyboard-' + note, frequency, 0.5);
+	};
 
-	keyboard.keyUp(function (note, frequency) {
-		SYNTH.removeSound('keyboard-' + note);
-	});
+	keyboard.keyUp = function (note, frequency) {
+		SYNTH.removeVoice('keyboard-' + note);
+	};
 
 	return keyboard;
 }
@@ -1106,25 +1181,16 @@ $(window).on('keydown', function (event) {
 // # PRESET CONTROLS                            #
 // ##############################################
 
-var presets = [
-	{
-		"id": 1,
-		"name": "Default",
-		"osc1": { "type": "sawtooth", "detune": 0, "mix": 1 },
-		"osc2": { "type": "none", "detune": 0, "mix": 1 },
-		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
-		"delay": { "delayTime": 0, "feedback": 0 },
-		"convolver": { "type": "none" },
-		"compressor": { "threshold": -24, "knee": 30, "ratio": 12, "reduction": 0, "attack": 0.003, "release": 0.25 },
-		"animation": { "type": "circularspectrum", "analyserFFT": 512, "scriptBuffer": 512 }
-	},
+var presets = [];
+var userPresets = [];
+var factoryPresets = [
+	$.extend({ "id": 1, "name": "Default" }, SYNTH.settings),
 	{
 		"id": 2,
 		"name": "Classic Electric Bass",
 		"osc1": { "type": "sine", "detune": 0, "mix": 1 },
 		"osc2": { "type": "sine", "detune": 1200, "mix": 1 },
 		"filter": { "type": "lowpass", "detune": 0, "frequency": 22050, "quality": 0, "gain": 0 },
-		"delay": { "delayTime": 0, "feedback": 0 },
 		"convolver": { "type": "none" },
 		"compressor": { "threshold": -24, "knee": 30, "ratio": 12, "reduction": 0, "attack": 0.003, "release": 0.25 },
 		"animation": { "type": "circularspectrum", "analyserFFT": 512, "scriptBuffer": 512 }
@@ -1135,7 +1201,6 @@ var presets = [
 		"osc1": { "type": "sawtooth", "detune": 0, "mix": 1 },
 		"osc2": { "type": "sawtooth", "detune": -1200, "mix": 0.5 },
 		"filter": { "type": "lowpass", "detune": 0, "frequency": 3000, "quality": 26, "gain": 0 },
-		"delay": { "delayTime": 0, "feedback": 0 },
 		"convolver": { "type": "none" },
 		"compressor": { "threshold": -24, "knee": 30, "ratio": 12, "reduction": 0, "attack": 0.003, "release": 0.25 },
 		"animation": { "type": "circularspectrum", "analyserFFT": 512, "scriptBuffer": 512 }
@@ -1166,9 +1231,6 @@ $('#preset-id').on('change', function () {
 			$('#filter-frequency').val(SYNTH.settings.filter.frequency).trigger('change');
 			$('#filter-quality').val(SYNTH.settings.filter.quality).trigger('change');
 			$('#filter-gain').val(SYNTH.settings.filter.gain).trigger('change');
-
-			$('#delay-time').val(SYNTH.settings.delay.delayTime).trigger('change');
-			$('#delay-feedback').val(SYNTH.settings.delay.feedback).trigger('change');
 
 			$('#convolver-type').val(SYNTH.settings.convolver.type).trigger('change');
 
@@ -1216,6 +1278,7 @@ $('#preset-save').on('click', function () {
 	}
 });
 
+/*
 $('#preset-export').on('click', function () {
 	var presetID = parseInt($('#preset-id').val(), 10);
 	presets.forEach(function (preset) {
@@ -1224,6 +1287,7 @@ $('#preset-export').on('click', function () {
 		}
 	});
 });
+*/
 
 localforage.getItem('presets', function (error, value) {
 	if (error) {
@@ -1322,7 +1386,7 @@ $('#surface')
 			multiplier = Math.pow(2, numberOfOctaves * (range - 1.0)),
 			frequency = maxValue * multiplier;
 
-		SYNTH.addSound('pointer-' + e.pointerId, frequency, e.pressure, filterFrequency);
+		SYNTH.addVoice('pointer-' + e.pointerId, frequency, e.pressure, filterFrequency);
 
 		if (!points.has(e.pointerId)) {
 			var colors = [ '#D34D2E', '#FF9900', '#F3CF3A', '#44DE43', '#3DC186', '#37BBBA', '#4DC3FA', '#B158B6', '#FB6368', '#F23A65' ];
@@ -1353,7 +1417,7 @@ $('#surface')
 				multiplier = Math.pow(2, numberOfOctaves * (range - 1.0)),
 				frequency = maxValue * multiplier;
 
-			SYNTH.updateSound('pointer-' + e.pointerId, frequency, null, filterFrequency);
+			SYNTH.updateVoice('pointer-' + e.pointerId, frequency, null, filterFrequency);
 
 			if (points.has(e.pointerId)) {
 				var point = points.get(e.pointerId);
@@ -1367,7 +1431,7 @@ $('#surface')
 			e = e.originalEvent;
 		}
 
-		SYNTH.removeSound('pointer-' + e.pointerId);
+		SYNTH.removeVoice('pointer-' + e.pointerId);
 
 		if (points.has(e.pointerId)) {
 			points.delete(e.pointerId);
@@ -1383,6 +1447,15 @@ $(document).on('touchmove', function (e) {
 	e.preventDefault();
 });
 
+// VISIBILITY API - remove all voices when page is no longer visible
+$(document).on('visibilitychange mozvisibilitychange msvisibilitychange webkitvisibilitychange', function (e) {
+	//console.log(e.type, document.hidden, document.mozHidden, document.msHidden, document.webkitHidden);
+	if (document.hidden || document.mozHidden || document.msHidden || document.webkitHidden) {
+		SOUNDSMAP.forEach(function (sound, id) {
+			SYNTH.removeVoice(sound.id);
+		});
+	}
+});
 
 /*
 
