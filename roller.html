@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Roller</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<link rel="icon" sizes="any" type="image/svg+xml" href="icon.svg">
+		<style>
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			:root,
+			html,
+			body {
+				-ms-text-size-adjust: 100%;
+				-webkit-text-size-adjust: 100%;
+				-moz-text-size-adjust: auto;
+				-moz-text-size-adjust: 100%;
+				font: 400 normal 14px/1.2 Lato, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+				background-color: #060606;
+				color: #ffffff;
+				width: 100%;
+				height: 100%;
+			}
+			body {
+				display: flex;
+				flex-flow: column nowrap;
+				justify-content: space-between;
+			}
+			.row {
+				display: flex;
+				flex-flow: row wrap;
+				justify-content: center;
+				align-items: center;
+				align-content: center;
+			}
+			.die {
+				display: flex;
+				flex-flow: column nowrap;
+				justify-content: center;
+				align-items: center;
+				align-content: center;
+				width: 100px;
+				height: 100px;
+				margin: 1.2rem;
+				font-size: 3rem;
+				border-radius: 1.2rem;
+				cursor: pointer;
+				user-select: none;
+			}
+			.smalldie {
+				display: flex;
+				flex-flow: column nowrap;
+				justify-content: center;
+				align-items: center;
+				align-content: center;
+				width: 50px;
+				height: 50px;
+				margin: 1.2rem;
+				font-size: 3rem;
+				border-radius: 0.6rem; 
+			}
+			.white {
+				background-color: white;
+				color: black;
+			}
+			.red {
+				background-color: crimson;
+				color: white;
+			}
+			.blue {
+				background-color: blue;
+				color: white;
+			}
+			.purple {
+				background-color: blueviolet;
+				color: white;
+			}
+			.button {
+				will-change: '';
+				cursor: pointer;
+				position: relative;
+				min-height: 1rem;
+				display: inline-block;
+				margin: 0 0.25rem 0 0;
+				padding: 0.78571429rem 1.5rem 0.78571429rem;
+				vertical-align: baseline;
+				font: inherit;
+				font-weight: bold;
+				text-align: center;
+				text-overflow: ellipsis;
+				text-transform: uppercase;
+				user-select: none;
+				outline: 0;
+				border: none;
+				border-radius: 0.28571429rem;
+				transition:
+					opacity 0.1s ease,
+					background-color 0.1s ease,
+					color 0.1s ease;
+				background-color: #ffffff;
+				color: #060606;
+			}
+			.button::-moz-focus-inner {
+				border: none;
+			}
+			.button:hover,
+			.button:focus {
+				background-color: #ffffff;
+				color: #060606;
+			}
+			.button:active {
+				background-color: #ffffff;
+				color: #060606;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="attack_pool" class="row" style="flex: 1"></div>
+		<div id="defense_pool" class="row" style="flex: 1"></div>
+		<div class="row">
+			<button id="roll" class="button">Roll</button>
+			<button id="reset" class="button">Reset</button>
+		</div>
+		<div class="row">
+			<div id="attack_1_spin" data-value="0" class="die white">0</div>
+			<div id="attack_2_spin" data-value="0" class="die red">0</div>
+			<div id="defense_1_spin" data-value="0" class="die blue">0</div>
+			<div id="defense_2_spin" data-value="0" class="die purple">0</div>
+		</div>
+
+		<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.slim.min.js"></script>
+		<script type="application/javascript">
+			//const attack_1_die = ['', '', '', 1, 2, 3];
+			//const attack_2_die = ['', 1, 1, 2, 2, 3];
+			//const defense_1_die = ['', '', '', '', 1, 2];
+			//const defense_2_die = ['', '', 1, 1, 2, 2];
+
+			// strike dice
+			// action dice: 0 0 0 1 1 2
+			// boost dice:  0 0 1 1 1 2
+			// power dice:  0 1 1 1 1 2
+			//const attack_1_die = ['', '', '', '✦', '✦', '✧'];
+			//const attack_2_die = ['', '✦', '✦', '✦', '✦', '✧'];
+			//const defense_1_die = ['', '', '', '✦', '✦', '✧'];
+			//const defense_2_die = ['', '✦', '✦', '✦', '✦', '✧'];
+
+			const attack_1_die = ['', '', '', '✦', '✦', '✹'];
+			const attack_2_die = ['', '✦', '✦', '✦', '✦', '✹'];
+			const defense_1_die = ['', '', '', '✦', '✦', '✹'];
+			const defense_2_die = ['', '✦', '✦', '✦', '✦', '✹'];
+
+			$('[data-value]').on('click', function () {
+				const $this = $(this);
+				const value = parseInt($this.attr('data-value'), 10);
+				const new_value = value + 1 > 5 ? 0 : value + 1;
+				$this.attr('data-value', new_value).text(new_value);
+			});
+
+			$('#roll').on('click', function () {
+				const $attack_pool = $('#attack_pool').empty();
+				const $defense_pool = $('#defense_pool').empty();
+				// attack 1
+				const attack_1_spin = parseInt($('#attack_1_spin').attr('data-value'), 10);
+				const attack_1_dice = [];
+				for (let i = 0; i < attack_1_spin; ++i) {
+					const value = attack_1_die[Math.floor(Math.random() * attack_1_die.length)];
+					attack_1_dice.push(value);
+				}
+				attack_1_dice.sort().forEach(function (value) {
+					$attack_pool.append(`<div class="smalldie white">${value}</div>`);
+				});
+				// attack 2
+				const attack_2_spin = parseInt($('#attack_2_spin').attr('data-value'), 10);
+				const attack_2_dice = [];
+				for (let i = 0; i < attack_2_spin; ++i) {
+					const value = attack_2_die[Math.floor(Math.random() * attack_2_die.length)];
+					attack_2_dice.push(value);
+				}
+				attack_2_dice.sort().forEach(function (value) {
+					$attack_pool.append(`<div class="smalldie red">${value}</div>`);
+				});
+				// defense 1
+				const defense_1_spin = parseInt($('#defense_1_spin').attr('data-value'), 10);
+				const defense_1_dice = [];
+				for (let i = 0; i < defense_1_spin; ++i) {
+					const value = defense_1_die[Math.floor(Math.random() * defense_1_die.length)];
+					defense_1_dice.push(value);
+				}
+				defense_1_dice.sort().forEach(function (value) {
+					$defense_pool.append(`<div class="smalldie blue">${value}</div>`);
+				});
+				// defense 2
+				const defense_2_spin = parseInt($('#defense_2_spin').attr('data-value'), 10);
+				const defense_2_dice = [];
+				for (let i = 0; i < defense_2_spin; ++i) {
+					const value = defense_2_die[Math.floor(Math.random() * defense_2_die.length)];
+					defense_2_dice.push(value);
+				}
+				defense_2_dice.sort().forEach(function (value) {
+					$defense_pool.append(`<div class="smalldie purple">${value}</div>`);
+				});
+			});
+
+			$('#reset').on('click', function () {
+				$('#attack_pool').empty();
+				$('#defense_pool').empty();
+				$('[data-value]').each(function () {
+					$(this).attr('data-value', 0).text(0);
+				});
+			});
+		</script>
+	</body>
+</html>
