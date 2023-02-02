@@ -135,24 +135,25 @@
 
 		<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.slim.min.js"></script>
 		<script type="application/javascript">
-			//const attack_1_die = ['', '', '', 1, 2, 3];
-			//const attack_2_die = ['', 1, 1, 2, 2, 3];
-			//const defense_1_die = ['', '', '', '', 1, 2];
-			//const defense_2_die = ['', '', 1, 1, 2, 2];
+			// symbols: ✦ ✧ ✹ ★ 🌢 ⛊ ⛉
 
-			// strike dice
+			// warcaster strike dice
 			// action dice: 0 0 0 1 1 2
 			// boost dice:  0 0 1 1 1 2
 			// power dice:  0 1 1 1 1 2
-			//const attack_1_die = ['', '', '', '✦', '✦', '✧'];
-			//const attack_2_die = ['', '✦', '✦', '✦', '✦', '✧'];
-			//const defense_1_die = ['', '', '', '✦', '✦', '✧'];
-			//const defense_2_die = ['', '✦', '✦', '✦', '✦', '✧'];
+			//const attack_1_die = ['', '', '', '✦', '✦', '✹'];
+			//const attack_2_die = ['', '✦', '✦', '✦', '✦', '✹'];
+			//const defense_1_die = ['', '', '', '✦', '✦', '✹'];
+			//const defense_2_die = ['', '✦', '✦', '✦', '✦', '✹'];
+			
+			// arcadia quest dice
+			// attack dice:  m m m r r c
+			// defense dice: - - - - b c
 
 			const attack_1_die = ['', '', '', '✦', '✦', '✹'];
 			const attack_2_die = ['', '✦', '✦', '✦', '✦', '✹'];
-			const defense_1_die = ['', '', '', '✦', '✦', '✹'];
-			const defense_2_die = ['', '✦', '✦', '✦', '✦', '✹'];
+			const defense_1_die = ['', '', '', '', '⛉', '⛊'];
+			const defense_2_die = ['', '', '⛉', '⛉', '⛉', '⛊'];
 
 			$('[data-value]').on('click', function () {
 				const $this = $(this);
