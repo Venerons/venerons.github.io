@@ -1,22 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<meta charset="utf-8">
+		<meta charset="utf-8" />
 		<title>Daniele Veneroni</title>
-		<link rel="stylesheet" type="text/css" href="style.css">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-		<link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Raleway:300">
+		<link
+			rel="preconnect"
+			href="https://fonts.googleapis.com"
+		/>
+		<link
+			rel="preconnect"
+			href="https://fonts.gstatic.com"
+			crossorigin
+		/>
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Raleway:wght@300&display=swap"
+		/>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+			integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
+		<style>
+			*,
+			*:before,
+			*:after {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			html,
+			body {
+				width: 100%;
+				height: 100%;
+				font: 300 normal 16px/1.2 Raleway, sans-serif;
+				color: #666666;
+				background-image: url(background.jpg);
+				background-size: cover;
+				background-color: #c2d5d3;
+			}
+			.card {
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				width: 100%;
+			}
+			.title-1 {
+				text-align: center;
+				font-size: 3rem;
+				font-weight: 300;
+			}
+			@media (max-width: 600px) {
+				.title-1 {
+					line-height: 3rem;
+				}
+			}
+			.title-2 {
+				text-align: center;
+				font-size: 1rem;
+				font-weight: 300;
+				margin-top: 1.2rem;
+			}
+			.links {
+				text-align: center;
+				margin-top: 2.4rem;
+			}
+			.link {
+				text-decoration: none;
+				color: rgba(0, 0, 0, 0.3);
+				cursor: pointer;
+				margin: 0.6rem;
+			}
+			.link:hover,
+			.link:focus {
+				color: #4f8aff;
+			}
+			.footer {
+				position: fixed;
+				bottom: 0;
+				left: 0;
+				width: 100%;
+				height: 30px;
+				line-height: 30px;
+				text-align: center;
+				font-size: 0.8rem;
+				padding: 0 1rem;
+			}
+		</style>
 	</head>
 	<body>
-		<main>
-			<h1>Daniele Veneroni</h1>
-			<h2>Full Stack Software Developer</h2>
-			<div id="links-bar">
-				<a href="https://github.com/Venerons" target="_blank" title="GitHub"><i class="fa-brands fa-github fa-2xl"></i></a>
-				<a href="https://codepen.io/Venerons" target="_blank" title="CodePen"><i class="fa-brands fa-codepen fa-2xl"></i></a>
-				<a href="https://www.linkedin.com/in/venerons" target="_blank" title="LinkedIn"><i class="fa-brands fa-linkedin fa-2xl"></i></a>
+		<div class="card">
+			<h1 class="title-1">Daniele Veneroni</h1>
+			<h2 class="title-2">Full Stack Software Developer</h2>
+			<div class="links">
+				<a
+					href="https://github.com/Venerons"
+					target="_blank"
+					title="GitHub"
+					class="link"
+				>
+					<i class="fa-brands fa-github fa-2xl"></i>
+				</a>
+				<a
+					href="https://codepen.io/Venerons"
+					target="_blank"
+					title="CodePen"
+					class="link"
+				>
+					<i class="fa-brands fa-codepen fa-2xl"></i>
+				</a>
+				<a
+					href="https://www.linkedin.com/in/venerons"
+					target="_blank"
+					title="LinkedIn"
+					class="link"
+				>
+					<i class="fa-brands fa-linkedin fa-2xl"></i>
+				</a>
 			</div>
-		</main>
-		<footer>© 2023 Daniele Veneroni</footer>
+		</div>
+		<footer class="footer">© 2023 Daniele Veneroni</footer>
 	</body>
 </html>
